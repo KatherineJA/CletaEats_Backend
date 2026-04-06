@@ -14,4 +14,3 @@ def obtener_conexion():
     except Error as e:
         print(f"Error al conectar a MySQL: {e}")
         return None
-

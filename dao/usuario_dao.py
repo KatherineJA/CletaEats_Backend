@@ -1,6 +1,7 @@
 from datos.conexion import obtener_conexion
 from modelo.usuario import Usuario
 
+
 class UsuarioDAO:
 
     def guardar(self, usuario):
@@ -20,6 +21,17 @@ class UsuarioDAO:
             finally:
                 cursor.close()
                 conexion.close()
+
+    def crear_usuario(self, correo, password, rol):
+        u = Usuario()
+        u.set_correo(correo)
+        u.password_hash = password  # En producción deberías usar hash
+        u.set_rol(rol)
+
+        resultado = self.guardar(u)
+        if resultado:
+            return resultado.get_id()  # Retornamos el ID para la tabla repartidor
+        return None
 
     def buscar_por_correo(self, correo):
         conexion = obtener_conexion()

@@ -51,5 +51,30 @@ CREATE TABLE repartidor (
     FOREIGN KEY (usuario_id) REFERENCES usuario(id)
 );
 
+CREATE TABLE pedido (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    cliente_id INT NOT NULL,
+    restaurante_id INT NOT NULL,
+    repartidor_id INT, -- Se asigna después
+    fecha_hora DATETIME DEFAULT CURRENT_TIMESTAMP,
+    subtotal DECIMAL(10,2),
+    costo_envio DECIMAL(10,2),
+    iva DECIMAL(10,2),
+    total DECIMAL(10,2),
+    estado ENUM('en preparación', 'en camino', 'entregado', 'suspendido') DEFAULT 'en preparación',
+    FOREIGN KEY (cliente_id) REFERENCES cliente(id),
+    FOREIGN KEY (restaurante_id) REFERENCES restaurante(id),
+    FOREIGN KEY (repartidor_id) REFERENCES repartidor(id)
+);
+
+CREATE TABLE pedido_detalle (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    pedido_id INT NOT NULL,
+    combo_numero INT NOT NULL,
+    cantidad INT NOT NULL,
+    precio_unitario DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (pedido_id) REFERENCES pedido(id)
+);
+
 
 SHOW TABLES;
