@@ -3,22 +3,22 @@ from logica.reporte_service import ReporteService
 reporte_service = ReporteService()
 
 _REPORTES = {
-    "/reporte/a": reporte_service.reporte_a,
-    "/reporte/b": reporte_service.reporte_b,
-    "/reporte/c": reporte_service.reporte_c,
-    "/reporte/d": reporte_service.reporte_d,
-    "/reporte/e": reporte_service.reporte_e,
-    "/reporte/f": reporte_service.reporte_f,
-    "/reporte/g": reporte_service.reporte_g,
-    "/reporte/h": reporte_service.reporte_h,
-    "/reporte/i": reporte_service.reporte_i,
-    "/reporte/j": reporte_service.reporte_j,
-    "/reporte/k": reporte_service.reporte_k,
-    "/reporte/l": reporte_service.reporte_l,
-    "/reporte/m": reporte_service.reporte_m,
-    "/reporte/n": reporte_service.reporte_n,
-    "/reporte/o": reporte_service.reporte_o,
-    "/reporte/p": reporte_service.reporte_p,
+    "/reporte/clientes-registrados": reporte_service.reporte_clientes_regitrados,
+    "/reporte/restaurantes-registrados": reporte_service.reporte_restaurantes_registrados,
+    "/reporte/repartidores-registrados": reporte_service.reporte_repartidores_registrados,
+    "/reporte/pedidos-registrados": reporte_service.reporte_pedidos_registrados,
+    "/reporte/clientes-activos": reporte_service.reporte_clientes_activos,
+    "/reporte/clientes-suspendidos": reporte_service.reporte_clientes_suspendidos,
+    "/reporte/repartidores-buenos": reporte_service.reporte_repartidores_sin_malos,
+    "/reporte/listado-restaurantes": reporte_service.reporte_restaurantes_listado,
+    "/reporte/restaurantes-con-mas-pedidos": reporte_service.reporte_restaurante_mas_pedidos,
+    "/reporte/ganancias-por-restaurante": reporte_service.reporte_monto_por_restaurante,
+    "/reporte/monto-global-total": reporte_service.reporte_monto_total_global,
+    "/reporte/restaurante-con-menos-pedidos": reporte_service.reporte_restaurante_menos_pedidos,
+    "/reporte/repartidores-malos": reporte_service.reporte_malos_por_repartidor,
+    "/reporte/pedidos-por-cliente": reporte_service.reporte_pedidos_por_cliente,
+    "/reporte/cliente-con-mas-pedidos": reporte_service.reporte_cliente_mas_pedidos,
+    "/reporte/hora-pico": reporte_service.reporte_hora_pico,
 }
 
 
