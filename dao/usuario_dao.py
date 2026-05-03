@@ -1,6 +1,7 @@
 from datos.conexion import obtener_conexion
 from modelo.usuario import Usuario
 
+
 class UsuarioDAO:
 
     def guardar(self, usuario):
@@ -8,8 +9,18 @@ class UsuarioDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                sql = "INSERT INTO usuario (correo, password_hash, rol) VALUES (%s, %s, %s)"
-                valores = (usuario.get_correo(), usuario.password_hash, usuario.get_rol())
+                sql = """INSERT INTO Usuario (cedula, nombre, correo, contrasena, telefono, rol, latitud, longitud)
+                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"""
+                valores = (
+                    usuario.cedula,
+                    usuario.nombre,
+                    usuario.correo,
+                    usuario.contrasena,
+                    usuario.telefono,
+                    usuario.rol,
+                    usuario.latitud,
+                    usuario.longitud
+                )
                 cursor.execute(sql, valores)
                 conexion.commit()
                 usuario.set_id(cursor.lastrowid)
@@ -26,15 +37,13 @@ class UsuarioDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                sql = "SELECT id, correo, password_hash, rol FROM usuario WHERE correo = %s"
+                sql = """SELECT id, cedula, nombre, correo, contrasena, telefono, rol, latitud, longitud
+                         FROM Usuario WHERE correo = %s"""
                 cursor.execute(sql, (correo,))
                 fila = cursor.fetchone()
                 if fila:
                     u = Usuario()
-                    u.set_id(fila[0])
-                    u.set_correo(fila[1])
-                    u.password_hash = fila[2]
-                    u.set_rol(fila[3])
+                    u.id, u.cedula, u.nombre, u.correo, u.contrasena, u.telefono, u.rol, u.latitud, u.longitud = fila
                     return u
                 return None
             except Exception as e:
@@ -43,3 +52,92 @@ class UsuarioDAO:
             finally:
                 cursor.close()
                 conexion.close()
+
+    def buscar_por_cedula(self, cedula):
+        conexion = obtener_conexion()
+        if conexion:
+            try:
+                cursor = conexion.cursor()
+                cursor.execute("SELECT id FROM Usuario WHERE cedula = %s", (cedula,))
+                return cursor.fetchone() is not None
+            except Exception as e:
+                print(f"Error al buscar por cédula: {e}")
+                return False
+            finally:
+                cursor.close()
+                conexion.close()
+
+    def buscar_por_id(self, id_usuario):
+        conexion = obtener_conexion()
+        if conexion:
+            try:
+                cursor = conexion.cursor()
+                sql = """SELECT id, cedula, nombre, correo, contrasena, telefono, rol, latitud, longitud
+                         FROM Usuario WHERE id = %s"""
+                cursor.execute(sql, (id_usuario,))
+                fila = cursor.fetchone()
+                if fila:
+                    u = Usuario()
+                    u.id, u.cedula, u.nombre, u.correo, u.contrasena, u.telefono, u.rol, u.latitud, u.longitud = fila
+                    return u
+                return None
+            except Exception as e:
+                print(f"Error al buscar usuario por id: {e}")
+                return None
+            finally:
+                cursor.close()
+                conexion.close()
+
+    def actualizar_perfil(self, id_usuario, nombre, telefono, latitud=None, longitud=None):
+        """Actualiza telefono y ubicacion del usuario."""
+        conexion = obtener_conexion()
+        if conexion:
+            try:
+                cursor = conexion.cursor()
+                cursor.execute("""UPDATE Usuario
+                                  SET nombre = %s,
+                                      telefono = %s,
+                                      latitud  = %s,
+                                      longitud = %s
+                                  WHERE id = %s""", (nombre, telefono, latitud, longitud, id_usuario))
+                conexion.commit()
+                return True
+            except Exception as e:
+                print(f"Error al actualizar perfil: {e}")
+                return False
+            finally:
+                cursor.close()
+                conexion.close()
+
+    def actualizar_tarjeta_cliente(self, id_usuario, numero_tarjeta):
+        conexion = obtener_conexion()
+        if conexion:
+            try:
+                cursor = conexion.cursor()
+                cursor.execute("UPDATE Cliente SET numero_tarjeta = %s WHERE id_usuario = %s",
+                               (numero_tarjeta, id_usuario))
+                conexion.commit()
+                return True
+            except Exception as e:
+                print(f"Error al actualizar tarjeta cliente: {e}")
+                return False
+            finally:
+                cursor.close()
+                conexion.close()
+
+    def actualizar_tarjeta_repartidor(self, id_usuario, numero_tarjeta):
+        conexion = obtener_conexion()
+        if conexion:
+            try:
+                cursor = conexion.cursor()
+                cursor.execute("UPDATE Repartidor SET numero_tarjeta = %s WHERE id_usuario = %s",
+                               (numero_tarjeta, id_usuario))
+                conexion.commit()
+                return True
+            except Exception as e:
+                print(f"Error al actualizar tarjeta repartidor: {e}")
+                return False
+            finally:
+                cursor.close()
+                conexion.close()
+
