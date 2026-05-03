@@ -7,7 +7,7 @@ def obtener_conexion():
             host="localhost",
             user="root",
             password="root",
-            database="cletaeats_db"
+            database="cletaeats"
         )
         if conexion.is_connected():
             return conexion

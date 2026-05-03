@@ -1,36 +1,23 @@
 class Repartidor:
+
     def __init__(self):
-        self.id = None
-        self.usuario_id = None # <--- Vinculado a tu tabla
-        self.cedula = ""
-        self.nombre = ""
-        self.correo = ""
-        self.direccion = ""
-        self.telefono = ""
-        self.tarjeta = ""
-        self.estado = "disponible"
-        self.amonestaciones = 0
-        self.km_diarios = 0.0
+        self.id_usuario = None
+        self.numero_tarjeta = ""
+        self.estado = "DISPONIBLE"  # DISPONIBLE / OCUPADO / SUSPENDIDO
+        self.kilometros_diarios = 0.0
 
     @classmethod
-    def nuevo(cls, usuario_id, cedula, nombre, correo, direccion, telefono, tarjeta):
-        rep = cls()
-        rep.usuario_id = usuario_id
-        rep.cedula = cedula
-        rep.nombre = nombre
-        rep.correo = correo
-        rep.direccion = direccion
-        rep.telefono = telefono
-        rep.tarjeta = tarjeta
-        return rep
+    def nuevo(cls, id_usuario, numero_tarjeta):
+        r = cls()
+        r.id_usuario = id_usuario
+        r.numero_tarjeta = numero_tarjeta
+        return r
 
-    def get_id(self): return self.id
-    def set_id(self, id): self.id = id
-    def get_cedula(self): return self.cedula
-    def get_nombre(self): return self.nombre
-    def get_correo(self): return self.correo
-    def get_direccion(self): return self.direccion
-    def get_telefono(self): return self.telefono
-    def get_tarjeta(self): return self.tarjeta
+    def get_id_usuario(self): return self.id_usuario
     def get_estado(self): return self.estado
     def set_estado(self, estado): self.estado = estado
+
+    def esta_disponible(self): return self.estado == "DISPONIBLE"
+
+    def __str__(self):
+        return f"Repartidor[id_usuario={self.id_usuario}, estado={self.estado}]"
