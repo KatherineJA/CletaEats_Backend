@@ -25,4 +25,13 @@ def manejar_get(path, query, responder):
         responder(200, repartidor_service.listar_repartidores_limpios())
         return True
 
+    elif path == "/repartidores/cercanos":
+        lat = query.get("lat", [None])[0]
+        lon = query.get("lon", [None])[0]
+        if not lat or not lon:
+            responder(400, {"exito": False, "mensaje": "lat y lon del restaurante requeridos"})
+            return True
+        responder(200, repartidor_service.listar_disponibles_cercanos(float(lat), float(lon)))
+        return True
+
     return False

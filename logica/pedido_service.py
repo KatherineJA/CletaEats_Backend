@@ -96,10 +96,27 @@ class PedidoService:
     # ------------------------------------------------------------------
     # Cambiar estado del pedido
     # ------------------------------------------------------------------
-    def cambiar_estado(self, id_pedido, nuevo_estado, id_repartidor=None):
+    def cambiar_estado(self, id_pedido, nuevo_estado, id_solicitante, rol_solicitante, id_repartidor=None):
         estados_validos = ["EN_PREPARACION", "EN_CAMINO", "ENTREGADO", "CANCELADO"]
         if nuevo_estado not in estados_validos:
             return {"exito": False, "mensaje": f"Estado inválido. Opciones: {estados_validos}"}
+
+        pedido = self.pedido_dao.buscar_por_id(id_pedido)
+        if not pedido:
+            return {"exito": False, "mensaje": "Pedido no encontrado"}
+
+        # --- Validación 1: solo el cliente dueño puede cancelar ---
+        if nuevo_estado == "CANCELADO":
+            if rol_solicitante != "CLIENTE" or pedido["id_cliente"] != id_solicitante:
+                return {"exito": False, "mensaje": "Solo el cliente dueño del pedido puede cancelarlo"}
+            if pedido["estado"] not in ("EN_PREPARACION",):
+                return {"exito": False, "mensaje": "Solo se puede cancelar un pedido en preparación"}
+
+        # --- Validación 2: repartidor no puede aceptar si ya tiene uno activo ---
+        if nuevo_estado == "EN_CAMINO" and id_repartidor:
+            pedidos_activos = self.pedido_dao.contar_pedidos_activos_repartidor(id_repartidor)
+            if pedidos_activos > 0:
+                return {"exito": False, "mensaje": "Ya tenés un pedido activo. Debés entregarlo antes de aceptar otro."}
 
         ok = self.pedido_dao.actualizar_estado(id_pedido, nuevo_estado, id_repartidor)
         if not ok:
@@ -108,8 +125,10 @@ class PedidoService:
         if nuevo_estado == "EN_CAMINO" and id_repartidor:
             self.repartidor_dao.actualizar_estado(id_repartidor, "OCUPADO")
         elif nuevo_estado == "ENTREGADO":
-            pedido = self.pedido_dao.buscar_por_id(id_pedido)
-            if pedido and pedido.get("id_repartidor"):
+            if pedido.get("id_repartidor"):
+                self.repartidor_dao.actualizar_estado(pedido["id_repartidor"], "DISPONIBLE")
+        elif nuevo_estado == "CANCELADO":
+            if pedido.get("id_repartidor"):
                 self.repartidor_dao.actualizar_estado(pedido["id_repartidor"], "DISPONIBLE")
 
         return {"exito": True, "mensaje": f"Pedido actualizado a {nuevo_estado}"}

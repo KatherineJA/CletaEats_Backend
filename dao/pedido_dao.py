@@ -179,3 +179,20 @@ class PedidoDAO:
             finally:
                 cursor.close()
                 conexion.close()
+
+    def contar_pedidos_activos_repartidor(self, id_repartidor):
+        """Cuenta pedidos EN_CAMINO del repartidor. Debe ser 0 para aceptar uno nuevo."""
+        conexion = obtener_conexion()
+        if conexion:
+            try:
+                cursor = conexion.cursor()
+                cursor.execute("""SELECT COUNT(*) FROM Pedido
+                                  WHERE id_repartidor = %s AND estado = 'EN_CAMINO'""",
+                               (id_repartidor,))
+                return cursor.fetchone()[0]
+            except Exception as e:
+                print(f"Error al contar pedidos activos: {e}")
+                return 0
+            finally:
+                cursor.close()
+                conexion.close()
