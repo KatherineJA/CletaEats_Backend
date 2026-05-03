@@ -19,13 +19,16 @@ def manejar_post(path, body, responder):
         return True
 
     elif path == "/pedido/estado":
-        id_pedido = body.get("id_pedido")
-        nuevo_estado = body.get("estado")
-        if not id_pedido or not nuevo_estado:
-            responder(400, {"exito": False, "mensaje": "id_pedido y estado requeridos"})
+        campos = ["id_pedido", "estado", "id_solicitante", "rol_solicitante"]
+        if not all(body.get(c) for c in campos):
+            responder(400, {"exito": False, "mensaje": "Faltan campos requeridos: id_pedido, estado, id_solicitante, rol_solicitante"})
             return True
         responder(200, pedido_service.cambiar_estado(
-            id_pedido, nuevo_estado, body.get("id_repartidor")
+            body["id_pedido"],
+            body["estado"],
+            body["id_solicitante"],
+            body["rol_solicitante"],
+            body.get("id_repartidor")
         ))
         return True
 

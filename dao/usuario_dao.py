@@ -12,14 +12,8 @@ class UsuarioDAO:
                 sql = """INSERT INTO Usuario (cedula, nombre, correo, contrasena, telefono, rol, latitud, longitud)
                          VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"""
                 valores = (
-                    usuario.cedula,
-                    usuario.nombre,
-                    usuario.correo,
-                    usuario.contrasena,
-                    usuario.telefono,
-                    usuario.rol,
-                    usuario.latitud,
-                    usuario.longitud
+                    usuario.cedula, usuario.nombre, usuario.correo, usuario.contrasena,
+                    usuario.telefono, usuario.rol, usuario.latitud, usuario.longitud
                 )
                 cursor.execute(sql, valores)
                 conexion.commit()
@@ -37,9 +31,8 @@ class UsuarioDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                sql = """SELECT id, cedula, nombre, correo, contrasena, telefono, rol, latitud, longitud
-                         FROM Usuario WHERE correo = %s"""
-                cursor.execute(sql, (correo,))
+                cursor.execute("""SELECT id, cedula, nombre, correo, contrasena, telefono, rol, latitud, longitud
+                                  FROM Usuario WHERE correo = %s""", (correo,))
                 fila = cursor.fetchone()
                 if fila:
                     u = Usuario()
@@ -72,9 +65,8 @@ class UsuarioDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                sql = """SELECT id, cedula, nombre, correo, contrasena, telefono, rol, latitud, longitud
-                         FROM Usuario WHERE id = %s"""
-                cursor.execute(sql, (id_usuario,))
+                cursor.execute("""SELECT id, cedula, nombre, correo, contrasena, telefono, rol, latitud, longitud
+                                  FROM Usuario WHERE id = %s""", (id_usuario,))
                 fila = cursor.fetchone()
                 if fila:
                     u = Usuario()
@@ -88,18 +80,14 @@ class UsuarioDAO:
                 cursor.close()
                 conexion.close()
 
-    def actualizar_perfil(self, id_usuario, nombre, telefono, latitud=None, longitud=None):
-        """Actualiza telefono y ubicacion del usuario."""
+    def actualizar_perfil(self, id_usuario, telefono, latitud=None, longitud=None):
+        """Actualiza teléfono y ubicación del usuario."""
         conexion = obtener_conexion()
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.execute("""UPDATE Usuario
-                                  SET nombre = %s,
-                                      telefono = %s,
-                                      latitud  = %s,
-                                      longitud = %s
-                                  WHERE id = %s""", (nombre, telefono, latitud, longitud, id_usuario))
+                cursor.execute("""UPDATE Usuario SET telefono = %s, latitud = %s, longitud = %s
+                                  WHERE id = %s""", (telefono, latitud, longitud, id_usuario))
                 conexion.commit()
                 return True
             except Exception as e:
@@ -140,4 +128,3 @@ class UsuarioDAO:
             finally:
                 cursor.close()
                 conexion.close()
-

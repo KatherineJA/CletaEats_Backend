@@ -64,3 +64,35 @@ class ComboDAO:
             finally:
                 cursor.close()
                 conexion.close()
+
+    def guardar_opcion(self, id_combo, nombre, tipo):
+        conexion = obtener_conexion()
+        if conexion:
+            try:
+                cursor = conexion.cursor()
+                cursor.execute("""INSERT INTO OpcionCombo (id_combo, nombre, tipo)
+                                  VALUES (%s, %s, %s)""", (id_combo, nombre, tipo))
+                conexion.commit()
+                return cursor.lastrowid
+            except Exception as e:
+                print(f"Error al guardar opción: {e}")
+                return None
+            finally:
+                cursor.close()
+                conexion.close()
+
+    def guardar_valor_opcion(self, id_opcion, descripcion, costo_adicional=0):
+        conexion = obtener_conexion()
+        if conexion:
+            try:
+                cursor = conexion.cursor()
+                cursor.execute("""INSERT INTO ValorOpcion (id_opcion, descripcion, costo_adicional)
+                                  VALUES (%s, %s, %s)""", (id_opcion, descripcion, costo_adicional))
+                conexion.commit()
+                return cursor.lastrowid
+            except Exception as e:
+                print(f"Error al guardar valor opción: {e}")
+                return None
+            finally:
+                cursor.close()
+                conexion.close()

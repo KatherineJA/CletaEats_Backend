@@ -4,7 +4,9 @@ import json
 
 from control import (
     auth_control,
+    usuario_control,
     restaurante_control,
+    encargado_control,
     repartidor_control,
     pedido_control,
     calificacion_control,
@@ -37,7 +39,7 @@ class Router(BaseHTTPRequestHandler):
         self.end_headers()
 
     # ------------------------------------------------------------------
-    # POST — delega en orden hasta que algún control lo maneje
+    # POST
     # ------------------------------------------------------------------
     def do_POST(self):
         try:
@@ -46,7 +48,9 @@ class Router(BaseHTTPRequestHandler):
 
             manejado = (
                 auth_control.manejar_post(path, body, self._responder) or
+                usuario_control.manejar_post(path, body, self._responder) or
                 restaurante_control.manejar_post(path, body, self._responder) or
+                encargado_control.manejar_post(path, body, self._responder) or
                 repartidor_control.manejar_post(path, body, self._responder) or
                 pedido_control.manejar_post(path, body, self._responder) or
                 calificacion_control.manejar_post(path, body, self._responder)
@@ -59,7 +63,7 @@ class Router(BaseHTTPRequestHandler):
             self._responder(500, {"exito": False, "mensaje": str(e)})
 
     # ------------------------------------------------------------------
-    # GET — delega en orden hasta que algún control lo maneje
+    # GET
     # ------------------------------------------------------------------
     def do_GET(self):
         try:
@@ -68,7 +72,9 @@ class Router(BaseHTTPRequestHandler):
             query = parse_qs(parsed.query)
 
             manejado = (
+                usuario_control.manejar_get(path, query, self._responder) or
                 restaurante_control.manejar_get(path, query, self._responder) or
+                encargado_control.manejar_get(path, query, self._responder) or
                 repartidor_control.manejar_get(path, query, self._responder) or
                 pedido_control.manejar_get(path, query, self._responder) or
                 reporte_control.manejar_get(path, query, self._responder)
