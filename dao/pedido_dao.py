@@ -96,11 +96,34 @@ class PedidoDAO:
         if conexion:
             try:
                 cursor = conexion.cursor(dictionary=True)
-                sql = """SELECT p.*, r.nombre AS nombre_restaurante
-                         FROM Pedido p
-                         JOIN Restaurante r ON p.id_restaurante = r.id
-                         WHERE p.id_cliente = %s
-                         ORDER BY p.hora_creacion DESC"""
+                sql = """
+                      SELECT p.*,
+                             r.nombre                     AS nombre_restaurante,
+                             (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0) \
+                              FROM DetallePedido dp2 \
+                                       JOIN Combo c2 ON dp2.id_combo = c2.id \
+                              WHERE dp2.id_pedido = p.id) AS subtotal,
+                             ROUND(
+                                     (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0) \
+                                      FROM DetallePedido dp2 \
+                                               JOIN Combo c2 ON dp2.id_combo = c2.id \
+                                      WHERE dp2.id_pedido = p.id) * 0.13 + p.costo_envio * 0.13, 2
+                             )                            AS iva,
+                             ROUND(
+                                     (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0) \
+                                      FROM DetallePedido dp2 \
+                                               JOIN Combo c2 ON dp2.id_combo = c2.id \
+                                      WHERE dp2.id_pedido = p.id) + p.costo_envio +
+                                     (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0) \
+                                      FROM DetallePedido dp2 \
+                                               JOIN Combo c2 ON dp2.id_combo = c2.id \
+                                      WHERE dp2.id_pedido = p.id) * 0.13 + p.costo_envio * 0.13, 2
+                             )                            AS total
+                      FROM Pedido p
+                               JOIN Restaurante r ON p.id_restaurante = r.id
+                      WHERE p.id_cliente = %s
+                      ORDER BY p.hora_creacion DESC \
+                      """
                 cursor.execute(sql, (id_cliente,))
                 return cursor.fetchall()
             except Exception as e:
