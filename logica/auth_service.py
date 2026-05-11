@@ -66,7 +66,7 @@ class AuthService:
         # Verificar suspensión para repartidores
         if usuario.get_rol() == "REPARTIDOR":
             repartidor = self.repartidor_dao.buscar_por_id(usuario.get_id())
-            if repartidor and repartidor.get_estado() == "SUSPENDIDO":
+            if repartidor and repartidor.estado == "SUSPENDIDO":
                 return {"exito": False, "mensaje": "Tu cuenta está suspendida. Contactá al administrador."}
 
         return {

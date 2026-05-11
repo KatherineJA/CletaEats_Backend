@@ -128,3 +128,18 @@ class UsuarioDAO:
             finally:
                 cursor.close()
                 conexion.close()
+
+    def actualizar_nombre(self, id_usuario, nombre):
+        conexion = obtener_conexion()
+        if conexion:
+            try:
+                cursor = conexion.cursor()
+                cursor.execute("UPDATE Usuario SET nombre = %s WHERE id = %s", (nombre, id_usuario))
+                conexion.commit()
+                return True
+            except Exception as e:
+                print(f"Error al actualizar nombre: {e}")
+                return False
+            finally:
+                cursor.close()
+                conexion.close()

@@ -28,10 +28,12 @@ class UsuarioService:
             }
         }
 
-    def editar_perfil(self, id_usuario, telefono, latitud=None, longitud=None):
+    def editar_perfil(self, id_usuario, telefono, nombre=None, latitud=None, longitud=None):
         if not telefono:
             return {"exito": False, "mensaje": "El teléfono es requerido"}
         ok = self.usuario_dao.actualizar_perfil(id_usuario, telefono, latitud, longitud)
+        if ok and nombre:
+            self.usuario_dao.actualizar_nombre(id_usuario, nombre)
         return {"exito": ok, "mensaje": "Perfil actualizado" if ok else "Error al actualizar perfil"}
 
     def editar_tarjeta_cliente(self, id_usuario, numero_tarjeta):

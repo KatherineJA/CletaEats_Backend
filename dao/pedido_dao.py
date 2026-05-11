@@ -133,41 +133,64 @@ class PedidoDAO:
                 cursor.close()
                 conexion.close()
 
+    def listar_disponibles(self):
+        conexion = obtener_conexion()
+        if conexion:
+            try:
+                cursor = conexion.cursor(dictionary=True)
+                sql = """SELECT p.*,
+                                r.nombre                                                   AS nombre_restaurante,
+                                r.latitud                                                  AS lat_restaurante,
+                                r.longitud                                                 AS lon_restaurante,
+                                u.nombre                                                   AS nombre_cliente,
+                                (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0) \
+                                 FROM DetallePedido dp2 \
+                                          JOIN Combo c2 ON dp2.id_combo = c2.id \
+                                 WHERE dp2.id_pedido = p.id) + p.costo_envio +
+                                (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0) \
+                                 FROM DetallePedido dp2 \
+                                          JOIN Combo c2 ON dp2.id_combo = c2.id \
+                                 WHERE dp2.id_pedido = p.id) * 0.13 + p.costo_envio * 0.13 AS total
+                         FROM Pedido p
+                                  JOIN Restaurante r ON p.id_restaurante = r.id
+                                  JOIN Usuario u ON p.id_cliente = u.id
+                         WHERE p.estado = 'EN_PREPARACION' \
+                           AND p.id_repartidor IS NULL
+                         ORDER BY p.hora_creacion ASC"""
+                cursor.execute(sql)
+                return cursor.fetchall()
+            except Exception as e:
+                print(f"Error al listar pedidos disponibles: {e}")
+                return []
+            finally:
+                cursor.close()
+                conexion.close()
+
     def listar_por_repartidor(self, id_repartidor):
         conexion = obtener_conexion()
         if conexion:
             try:
                 cursor = conexion.cursor(dictionary=True)
-                sql = """SELECT p.*, r.nombre AS nombre_restaurante
+                sql = """SELECT p.*,
+                                r.nombre                                                   AS nombre_restaurante,
+                                u.nombre                                                   AS nombre_cliente,
+                                (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0) \
+                                 FROM DetallePedido dp2 \
+                                          JOIN Combo c2 ON dp2.id_combo = c2.id \
+                                 WHERE dp2.id_pedido = p.id) + p.costo_envio +
+                                (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0) \
+                                 FROM DetallePedido dp2 \
+                                          JOIN Combo c2 ON dp2.id_combo = c2.id \
+                                 WHERE dp2.id_pedido = p.id) * 0.13 + p.costo_envio * 0.13 AS total
                          FROM Pedido p
-                         JOIN Restaurante r ON p.id_restaurante = r.id
+                                  JOIN Restaurante r ON p.id_restaurante = r.id
+                                  JOIN Usuario u ON p.id_cliente = u.id
                          WHERE p.id_repartidor = %s
                          ORDER BY p.hora_creacion DESC"""
                 cursor.execute(sql, (id_repartidor,))
                 return cursor.fetchall()
             except Exception as e:
                 print(f"Error al listar pedidos por repartidor: {e}")
-                return []
-            finally:
-                cursor.close()
-                conexion.close()
-
-    def listar_disponibles(self):
-        """Pedidos EN_PREPARACION sin repartidor asignado."""
-        conexion = obtener_conexion()
-        if conexion:
-            try:
-                cursor = conexion.cursor(dictionary=True)
-                sql = """SELECT p.*, r.nombre AS nombre_restaurante,
-                                r.latitud AS lat_restaurante, r.longitud AS lon_restaurante
-                         FROM Pedido p
-                         JOIN Restaurante r ON p.id_restaurante = r.id
-                         WHERE p.estado = 'EN_PREPARACION' AND p.id_repartidor IS NULL
-                         ORDER BY p.hora_creacion ASC"""
-                cursor.execute(sql)
-                return cursor.fetchall()
-            except Exception as e:
-                print(f"Error al listar pedidos disponibles: {e}")
                 return []
             finally:
                 cursor.close()

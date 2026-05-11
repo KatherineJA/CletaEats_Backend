@@ -52,13 +52,15 @@ def manejar_post(path, body, responder):
     return False
 
 
-def manejar_get(path, query, responder):
+def manejar_get(path, body, responder):
     if path == "/usuario/perfil":
-        id_usuario = query.get("id", [None])[0]
-        if not id_usuario:
-            responder(400, {"exito": False, "mensaje": "ID de usuario requerido"})
+        id_usuario = body.get("id_usuario")
+        telefono = body.get("telefono")
+        if not id_usuario or not telefono:
+            responder(400, {"exito": False, "mensaje": "id_usuario y telefono requeridos"})
             return True
-        responder(200, usuario_service.obtener_perfil(id_usuario))
+        responder(200, usuario_service.editar_perfil(
+            id_usuario, telefono, body.get("nombre"), body.get("latitud"), body.get("longitud")
+        ))
         return True
-
     return False

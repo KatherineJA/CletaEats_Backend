@@ -85,10 +85,18 @@ class PedidoService:
             return {"exito": False, "mensaje": "Pedido no encontrado"}
 
         if nuevo_estado == "CANCELADO":
-            if rol_solicitante != "CLIENTE" or pedido["id_cliente"] != id_solicitante:
-                return {"exito": False, "mensaje": "Solo el cliente dueño del pedido puede cancelarlo"}
-            if pedido["estado"] not in ("EN_PREPARACION", "EN_CAMINO"):
-                return {"exito": False, "mensaje": "Solo se puede cancelar un pedido activo"}
+            if rol_solicitante == "CLIENTE":
+                if pedido["id_cliente"] != id_solicitante:
+                    return {"exito": False, "mensaje": "Solo el cliente dueño del pedido puede cancelarlo"}
+                if pedido["estado"] not in ("EN_PREPARACION", "EN_CAMINO"):
+                    return {"exito": False, "mensaje": "Solo se puede cancelar un pedido activo"}
+            elif rol_solicitante == "REPARTIDOR":
+                if pedido["id_repartidor"] != id_solicitante:
+                    return {"exito": False, "mensaje": "Solo el repartidor asignado puede cancelar el pedido"}
+                if pedido["estado"] != "EN_CAMINO":
+                    return {"exito": False, "mensaje": "Solo podés cancelar un pedido que estás entregando"}
+            else:
+                return {"exito": False, "mensaje": "No tenés permiso para cancelar este pedido"}
 
         if nuevo_estado == "EN_CAMINO" and id_repartidor:
             pedidos_activos = self.pedido_dao.contar_pedidos_activos_repartidor(id_repartidor)
