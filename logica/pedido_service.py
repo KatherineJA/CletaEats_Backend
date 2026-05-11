@@ -13,9 +13,6 @@ class PedidoService:
         self.cliente_dao = ClienteDAO()
         self.repartidor_dao = RepartidorDAO()
 
-    # ------------------------------------------------------------------
-    # Haversine
-    # ------------------------------------------------------------------
     def calcular_distancia_km(self, lat1, lon1, lat2, lon2):
         R = 6371
         lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
@@ -24,9 +21,6 @@ class PedidoService:
         a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
         return R * 2 * math.asin(math.sqrt(a))
 
-    # ------------------------------------------------------------------
-    # Porcentaje de envío según distancia
-    # ------------------------------------------------------------------
     def calcular_porcentaje_envio(self, distancia_km):
         if distancia_km <= 3:
             return 0.10
@@ -37,21 +31,10 @@ class PedidoService:
         else:
             return 0.50
 
-    # ------------------------------------------------------------------
-    # Crear pedido
-    # ------------------------------------------------------------------
     def crear_pedido(self, id_cliente, id_restaurante,
                      lat_restaurante, lon_restaurante,
                      lat_destino, lon_destino,
                      items):
-        """
-        items: lista de dicts con:
-            - id_combo
-            - cantidad
-            - precio_unitario
-            - extras_costo (suma de costo_adicional de las opciones elegidas)
-            - valores_opcion (lista de id_valor_opcion elegidos)
-        """
         cliente = self.cliente_dao.buscar_por_id(id_cliente)
         if not cliente or not cliente.esta_activo():
             return {"exito": False, "mensaje": "El cliente está suspendido y no puede realizar pedidos."}
@@ -64,7 +47,6 @@ class PedidoService:
         distancia_km = self.calcular_distancia_km(lat_restaurante, lon_restaurante, lat_destino, lon_destino)
         porcentaje = self.calcular_porcentaje_envio(distancia_km)
         costo_envio = round(subtotal * porcentaje, 2)
-
         iva = round((subtotal + costo_envio) * 0.13, 2)
         total = round(subtotal + costo_envio + iva, 2)
 
@@ -93,9 +75,6 @@ class PedidoService:
             }
         }
 
-    # ------------------------------------------------------------------
-    # Cambiar estado del pedido
-    # ------------------------------------------------------------------
     def cambiar_estado(self, id_pedido, nuevo_estado, id_solicitante, rol_solicitante, id_repartidor=None):
         estados_validos = ["EN_PREPARACION", "EN_CAMINO", "ENTREGADO", "CANCELADO"]
         if nuevo_estado not in estados_validos:
@@ -105,14 +84,12 @@ class PedidoService:
         if not pedido:
             return {"exito": False, "mensaje": "Pedido no encontrado"}
 
-        # --- Validación 1: solo el cliente dueño puede cancelar ---
         if nuevo_estado == "CANCELADO":
             if rol_solicitante != "CLIENTE" or pedido["id_cliente"] != id_solicitante:
                 return {"exito": False, "mensaje": "Solo el cliente dueño del pedido puede cancelarlo"}
-            if pedido["estado"] not in ("EN_PREPARACION",):
-                return {"exito": False, "mensaje": "Solo se puede cancelar un pedido en preparación"}
+            if pedido["estado"] not in ("EN_PREPARACION", "EN_CAMINO"):
+                return {"exito": False, "mensaje": "Solo se puede cancelar un pedido activo"}
 
-        # --- Validación 2: repartidor no puede aceptar si ya tiene uno activo ---
         if nuevo_estado == "EN_CAMINO" and id_repartidor:
             pedidos_activos = self.pedido_dao.contar_pedidos_activos_repartidor(id_repartidor)
             if pedidos_activos > 0:
@@ -133,9 +110,6 @@ class PedidoService:
 
         return {"exito": True, "mensaje": f"Pedido actualizado a {nuevo_estado}"}
 
-    # ------------------------------------------------------------------
-    # Calificar
-    # ------------------------------------------------------------------
     def calificar(self, id_pedido, id_evaluador, id_evaluado, rol_evaluador, tipo, opinion=""):
         if tipo not in ("BUENO", "REGULAR", "MALO"):
             return {"exito": False, "mensaje": "Tipo inválido. Opciones: BUENO, REGULAR, MALO"}
@@ -160,9 +134,6 @@ class PedidoService:
 
         return {"exito": True, "mensaje": "Calificación guardada"}
 
-    # ------------------------------------------------------------------
-    # Consultas
-    # ------------------------------------------------------------------
     def historial_cliente(self, id_cliente):
         return {"exito": True, "datos": self.pedido_dao.listar_por_cliente(id_cliente)}
 

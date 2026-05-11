@@ -23,7 +23,7 @@ def manejar_get(path, query, responder):
         responder(200, restaurante_service.listar_restaurantes())
         return True
 
-    elif path == "/restaurante/menu":
+    elif path == "/restaurantes/menu":
         id_res = query.get("id", [None])[0]
         if not id_res:
             responder(400, {"exito": False, "mensaje": "ID de restaurante requerido"})
