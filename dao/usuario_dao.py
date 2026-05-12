@@ -143,3 +143,31 @@ class UsuarioDAO:
             finally:
                 cursor.close()
                 conexion.close()
+
+    def listar_por_rol_y_estado(self, rol, estado):
+        conexion = obtener_conexion()
+        if conexion:
+            try:
+                cursor = conexion.cursor(dictionary=True)
+                cursor.execute("""SELECT id, cedula, nombre
+                                  FROM Usuario u
+                                           JOIN Cliente c ON u.id = c.id_usuario
+                                  WHERE u.rol = %s
+                                    AND c.estado = %s""", (rol, estado))
+                return cursor.fetchall()
+            finally:
+                cursor.close()
+                conexion.close()
+
+    def cambiar_estado_cliente(self, id_usuario, nuevo_estado):
+        # Para pasar de 'ACTIVO' a 'SUSPENDIDO'
+        conexion = obtener_conexion()
+        if conexion:
+            try:
+                cursor = conexion.cursor()
+                cursor.execute("UPDATE Cliente SET estado = %s WHERE id_usuario = %s", (nuevo_estado, id_usuario))
+                conexion.commit()
+                return True
+            finally:
+                cursor.close()
+                conexion.close()

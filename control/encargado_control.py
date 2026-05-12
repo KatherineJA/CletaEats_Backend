@@ -1,3 +1,4 @@
+#encargado_control.py
 from logica.encargado_service import EncargadoService
 
 encargado_service = EncargadoService()
@@ -60,3 +61,14 @@ def manejar_get(path, query, responder):
         return True
 
     return False
+
+def obtener_kpis_principales(self):
+    return {
+        "exito": True,
+        "datos": {
+            "total_ventas": self.reporte_dao.monto_total_global(),
+            "hora_pico": self.reporte_dao.hora_pico(),
+            "cliente_top": self.reporte_dao.cliente_mas_pedidos(),
+            "restaurante_top": self.reporte_dao.restaurante_mas_pedidos()
+        }
+    }

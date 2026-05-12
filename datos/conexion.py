@@ -1,9 +1,11 @@
 import mysql.connector
 import os
+from dotenv import load_dotenv
+
+load_dotenv()  # carga el .env
 
 def obtener_conexion():
     try:
-
         return mysql.connector.connect(
             host=os.environ.get("MYSQLHOST"),
             user=os.environ.get("MYSQLUSER"),
