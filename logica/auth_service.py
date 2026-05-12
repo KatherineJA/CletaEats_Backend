@@ -57,13 +57,11 @@ class AuthService:
         if not usuario.verificar_password(password):
             return {"exito": False, "mensaje": "Correo o contraseña incorrectos"}
 
-        # Verificar suspensión para clientes
         if usuario.get_rol() == "CLIENTE":
             cliente = self.cliente_dao.buscar_por_id(usuario.get_id())
             if cliente and not cliente.esta_activo():
                 return {"exito": False, "mensaje": "Tu cuenta está suspendida. Contactá al administrador."}
 
-        # Verificar suspensión para repartidores
         if usuario.get_rol() == "REPARTIDOR":
             repartidor = self.repartidor_dao.buscar_por_id(usuario.get_id())
             if repartidor and repartidor.estado == "SUSPENDIDO":

@@ -56,7 +56,6 @@ class RepartidorDAO:
                 conexion.close()
 
     def listar_disponibles(self):
-        """Repartidores DISPONIBLE con menos de 4 calificaciones MALO."""
         conexion = obtener_conexion()
         if conexion:
             try:
@@ -81,7 +80,6 @@ class RepartidorDAO:
                 conexion.close()
 
     def listar_sin_calificaciones_malo(self):
-        """Reporte G: repartidores con cero calificaciones MALO."""
         conexion = obtener_conexion()
         if conexion:
             try:

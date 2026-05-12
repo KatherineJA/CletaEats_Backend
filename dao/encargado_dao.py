@@ -37,7 +37,6 @@ class EncargadoDAO:
                 conexion.close()
 
     def buscar_restaurante_de_encargado(self, id_usuario):
-        """Retorna el id_restaurante que gestiona este encargado."""
         conexion = obtener_conexion()
         if conexion:
             try:

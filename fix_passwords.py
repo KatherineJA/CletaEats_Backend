@@ -1,11 +1,14 @@
 import bcrypt
 import mysql.connector
+import os
+
 
 conexion = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    password="root",
-    database="cletaeats"
+    host=os.environ.get("MYSQLHOST"),
+    user=os.environ.get("MYSQLUSER"),
+    password=os.environ.get("MYSQLPASSWORD"),
+    database=os.environ.get("MYSQL_DATABASE"),
+    port=int(os.environ.get("MYSQLPORT", 3306))
 )
 
 password = "password123"

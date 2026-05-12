@@ -197,7 +197,6 @@ class PedidoDAO:
                 conexion.close()
 
     def listar_detalles(self, id_pedido):
-        """Combos + preferencias de un pedido, para mostrar en la factura."""
         conexion = obtener_conexion()
         if conexion:
             try:
@@ -227,7 +226,6 @@ class PedidoDAO:
                 conexion.close()
 
     def contar_pedidos_activos_repartidor(self, id_repartidor):
-        """Cuenta pedidos EN_CAMINO del repartidor. Debe ser 0 para aceptar uno nuevo."""
         conexion = obtener_conexion()
         if conexion:
             try:

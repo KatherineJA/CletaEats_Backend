@@ -81,7 +81,6 @@ class UsuarioDAO:
                 conexion.close()
 
     def actualizar_perfil(self, id_usuario, telefono, latitud=None, longitud=None):
-        """Actualiza teléfono y ubicación del usuario."""
         conexion = obtener_conexion()
         if conexion:
             try:
@@ -160,7 +159,6 @@ class UsuarioDAO:
                 conexion.close()
 
     def cambiar_estado_cliente(self, id_usuario, nuevo_estado):
-        # Para pasar de 'ACTIVO' a 'SUSPENDIDO'
         conexion = obtener_conexion()
         if conexion:
             try:

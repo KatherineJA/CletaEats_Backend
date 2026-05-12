@@ -31,6 +31,9 @@ class Router(BaseHTTPRequestHandler):
         except Exception:
             return {}
 
+    # ------------------------------------------------------------------
+    # OPTIONS
+    # ------------------------------------------------------------------
     def do_OPTIONS(self):
         self.send_response(200)
         self.send_header("Access-Control-Allow-Origin", "*")

@@ -48,9 +48,6 @@ class UsuarioService:
         ok = self.usuario_dao.actualizar_tarjeta_repartidor(id_usuario, numero_tarjeta)
         return {"exito": ok, "mensaje": "Tarjeta actualizada" if ok else "Error al actualizar tarjeta"}
 
-    # ------------------------------------------------------------------
-    # Reactivación manual por el administrador
-    # ------------------------------------------------------------------
     def reactivar_cliente(self, id_usuario):
         usuario = self.usuario_dao.buscar_por_id(id_usuario)
         if not usuario:

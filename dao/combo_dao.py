@@ -4,7 +4,6 @@ from datos.conexion import obtener_conexion
 class ComboDAO:
 
     def guardar(self, combo):
-        """combo es un dict con: id_restaurante, nombre, descripcion, numero, precio, imagen"""
         conexion = obtener_conexion()
         if conexion:
             try:

@@ -11,7 +11,6 @@ class RepartidorService:
         return {"exito": True, "datos": repartidores}
 
     def listar_repartidores_limpios(self):
-        """Reporte G: repartidores con cero calificaciones MALO."""
         repartidores = self.repartidor_dao.listar_sin_calificaciones_malo()
         return {"exito": True, "datos": repartidores}
 
@@ -23,7 +22,6 @@ class RepartidorService:
         return {"exito": ok, "mensaje": "Estado actualizado" if ok else "Error al actualizar estado"}
 
     def listar_disponibles_cercanos(self, lat_restaurante, lon_restaurante):
-        """Repartidores disponibles ordenados por cercanía al restaurante (Haversine)."""
         import math
 
         def haversine(lat1, lon1, lat2, lon2):

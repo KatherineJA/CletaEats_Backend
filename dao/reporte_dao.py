@@ -2,14 +2,7 @@ from datos.conexion import obtener_conexion
 
 
 class ReporteDAO:
-    """
-    Contiene todas las queries de los reportes definidos en el documento
-    (sección 8, ítems a–p). Todos son de solo lectura (SELECT).
-    """
 
-    # ------------------------------------------------------------------
-    # a) Registro de clientes
-    # ------------------------------------------------------------------
     def clientes_registrados(self):
         conexion = obtener_conexion()
         if conexion:
@@ -29,9 +22,6 @@ class ReporteDAO:
                 cursor.close()
                 conexion.close()
 
-    # ------------------------------------------------------------------
-    # b) Registro de restaurantes
-    # ------------------------------------------------------------------
     def restaurantes_registrados(self):
         conexion = obtener_conexion()
         if conexion:
@@ -50,9 +40,6 @@ class ReporteDAO:
                 cursor.close()
                 conexion.close()
 
-    # ------------------------------------------------------------------
-    # c) Registro de repartidores
-    # ------------------------------------------------------------------
     def repartidores_registrados(self):
         conexion = obtener_conexion()
         if conexion:
@@ -72,9 +59,6 @@ class ReporteDAO:
                 cursor.close()
                 conexion.close()
 
-    # ------------------------------------------------------------------
-    # d) Registro de pedidos
-    # ------------------------------------------------------------------
     def pedidos_registrados(self):
         conexion = obtener_conexion()
         if conexion:
@@ -99,9 +83,6 @@ class ReporteDAO:
                 cursor.close()
                 conexion.close()
 
-    # ------------------------------------------------------------------
-    # e) Clientes activos: id, cédula, nombre
-    # ------------------------------------------------------------------
     def clientes_activos(self):
         conexion = obtener_conexion()
         if conexion:
@@ -122,9 +103,6 @@ class ReporteDAO:
                 cursor.close()
                 conexion.close()
 
-    # ------------------------------------------------------------------
-    # f) Clientes suspendidos: id, cédula, nombre
-    # ------------------------------------------------------------------
     def clientes_suspendidos(self):
         conexion = obtener_conexion()
         if conexion:
@@ -145,9 +123,6 @@ class ReporteDAO:
                 cursor.close()
                 conexion.close()
 
-    # ------------------------------------------------------------------
-    # g) Repartidores con cero calificaciones MALO
-    # ------------------------------------------------------------------
     def repartidores_sin_malos(self):
         conexion = obtener_conexion()
         if conexion:
@@ -171,9 +146,6 @@ class ReporteDAO:
                 cursor.close()
                 conexion.close()
 
-    # ------------------------------------------------------------------
-    # h) Listado de restaurantes: nombre, cédula jurídica, dirección, tipo
-    # ------------------------------------------------------------------
     def restaurantes_listado(self):
         conexion = obtener_conexion()
         if conexion:
@@ -192,9 +164,6 @@ class ReporteDAO:
                 cursor.close()
                 conexion.close()
 
-    # ------------------------------------------------------------------
-    # i) Restaurante con mayor número de pedidos
-    # ------------------------------------------------------------------
     def restaurante_mas_pedidos(self):
         conexion = obtener_conexion()
         if conexion:
@@ -216,9 +185,6 @@ class ReporteDAO:
                 cursor.close()
                 conexion.close()
 
-    # ------------------------------------------------------------------
-    # j) Monto total vendido por cada restaurante
-    # ------------------------------------------------------------------
     def monto_por_restaurante(self):
         conexion = obtener_conexion()
         if conexion:
@@ -247,9 +213,6 @@ class ReporteDAO:
                 cursor.close()
                 conexion.close()
 
-    # ------------------------------------------------------------------
-    # k) Monto total vendido por todos los restaurantes
-    # ------------------------------------------------------------------
     def monto_total_global(self):
         conexion = obtener_conexion()
         if conexion:
@@ -275,9 +238,6 @@ class ReporteDAO:
                 cursor.close()
                 conexion.close()
 
-    # ------------------------------------------------------------------
-    # l) Restaurante con menor número de pedidos
-    # ------------------------------------------------------------------
     def restaurante_menos_pedidos(self):
         conexion = obtener_conexion()
         if conexion:
@@ -299,9 +259,6 @@ class ReporteDAO:
                 cursor.close()
                 conexion.close()
 
-    # ------------------------------------------------------------------
-    # m) Calificaciones MALO por cada repartidor
-    # ------------------------------------------------------------------
     def malos_por_repartidor(self):
         conexion = obtener_conexion()
         if conexion:
@@ -325,9 +282,6 @@ class ReporteDAO:
                 cursor.close()
                 conexion.close()
 
-    # ------------------------------------------------------------------
-    # n) Listado de pedidos por cada cliente
-    # ------------------------------------------------------------------
     def pedidos_por_cliente(self):
         conexion = obtener_conexion()
         if conexion:
@@ -350,9 +304,6 @@ class ReporteDAO:
                 cursor.close()
                 conexion.close()
 
-    # ------------------------------------------------------------------
-    # o) Cliente con mayor número de pedidos
-    # ------------------------------------------------------------------
     def cliente_mas_pedidos(self):
         conexion = obtener_conexion()
         if conexion:
@@ -375,9 +326,6 @@ class ReporteDAO:
                 cursor.close()
                 conexion.close()
 
-    # ------------------------------------------------------------------
-    # p) Hora pico: hora en que se realizaron más pedidos
-    # ------------------------------------------------------------------
     def hora_pico(self):
         conexion = obtener_conexion()
         if conexion:

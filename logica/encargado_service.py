@@ -13,9 +13,6 @@ class EncargadoService:
         self.usuario_dao = UsuarioDAO()
         self.restaurante_dao = RestauranteDAO()
 
-    # ------------------------------------------------------------------
-    # Registro de encargado
-    # ------------------------------------------------------------------
     def registrar_encargado(self, cedula, nombre, correo, password, telefono, id_restaurante,
                              latitud=None, longitud=None):
         if self.usuario_dao.buscar_por_correo(correo):
@@ -39,9 +36,6 @@ class EncargadoService:
 
         return {"exito": True, "mensaje": "Encargado registrado correctamente", "id": usuario_guardado.get_id()}
 
-    # ------------------------------------------------------------------
-    # Gestión de combos
-    # ------------------------------------------------------------------
     def agregar_combo(self, id_usuario, nombre, descripcion, numero, imagen=None):
         id_restaurante = self.encargado_dao.buscar_restaurante_de_encargado(id_usuario)
         if not id_restaurante:
@@ -50,7 +44,6 @@ class EncargadoService:
         if not (1 <= numero <= 9):
             return {"exito": False, "mensaje": "El número de combo debe estar entre 1 y 9"}
 
-        # Precio fijo según número: combo 1=4000, combo 2=5000 ... combo 9=12000
         precio = 4000 + (numero - 1) * 1000
 
         combo = {
