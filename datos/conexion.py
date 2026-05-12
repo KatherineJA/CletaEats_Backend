@@ -8,7 +8,7 @@ def obtener_conexion():
             host=os.environ.get("MYSQLHOST"),
             user=os.environ.get("MYSQLUSER"),
             password=os.environ.get("MYSQLPASSWORD"),
-            database=os.environ.get("MYSQLDATABASE"),
+            database=os.environ.get("MYSQL_DATABASE"),
             port=int(os.environ.get("MYSQLPORT", 3306))
         )
     except Exception as e:
