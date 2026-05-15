@@ -50,6 +50,7 @@ def manejar_post(path, body, responder):
         return True
 
 
+
     elif path == "/usuario/foto":
 
         import base64, os
@@ -60,22 +61,43 @@ def manejar_post(path, body, responder):
 
         if not id_usuario or not foto_b64:
             responder(400, {"exito": False, "mensaje": "Faltan datos"})
-            return True
-        try:
-            datos = base64.b64decode(foto_b64)
-            carpeta = "fotos_perfil"
-            os.makedirs(carpeta, exist_ok=True)
-            ruta = f"{carpeta}/usuario_{id_usuario}.jpg"
-            with open(ruta, "wb") as f:
-                f.write(datos)
-            url = f"/{ruta}"
-            usuario_service.guardar_url_foto(id_usuario, url)  # <- línea nueva
-            responder(200, {"exito": True, "url": url})
-        except Exception as e:
-            responder(500, {"exito": False, "mensaje": str(e)})
-        return True
 
-    return False
+            return True
+
+        try:
+
+            usar_imgbb = os.environ.get("USAR_IMGBB", "false").lower() == "true"
+
+            if usar_imgbb:
+                import requests
+                IMGBB_API_KEY = os.environ.get("762cb65c309088aa0ae0b13b42700171", "")
+                response = requests.post(
+                    "https://api.imgbb.com/1/upload",
+                    data={"key": IMGBB_API_KEY, "image": foto_b64}
+                )
+                resultado = response.json()
+                if resultado.get("success"):
+                    url = resultado["data"]["url"]
+                    usuario_service.guardar_url_foto(id_usuario, url)
+                    responder(200, {"exito": True, "url": url})
+                else:
+                    responder(500, {"exito": False, "mensaje": "Error al subir imagen a ImgBB"})
+            else:
+                datos = base64.b64decode(foto_b64)
+                carpeta = "fotos_perfil"
+                os.makedirs(carpeta, exist_ok=True)
+                ruta = f"{carpeta}/usuario_{id_usuario}.jpg"
+                with open(ruta, "wb") as f:
+                    f.write(datos)
+                url = f"/fotos_perfil/usuario_{id_usuario}.jpg"
+                usuario_service.guardar_url_foto(id_usuario, url)
+                responder(200, {"exito": True, "url": url})
+
+        except Exception as e:
+
+            responder(500, {"exito": False, "mensaje": str(e)})
+
+        return True
 
 
 def manejar_get(path, query, responder):
