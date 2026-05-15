@@ -10,6 +10,9 @@ class UsuarioService:
         self.cliente_dao = ClienteDAO()
         self.repartidor_dao = RepartidorDAO()
 
+    def guardar_url_foto(self, id_usuario, url):
+        return self.usuario_dao.actualizar_foto(id_usuario, url)
+
     def obtener_perfil(self, id_usuario):
         usuario = self.usuario_dao.buscar_por_id(id_usuario)
         if not usuario:
@@ -24,7 +27,8 @@ class UsuarioService:
                 "telefono": usuario.telefono,
                 "rol": usuario.rol,
                 "latitud": usuario.latitud,
-                "longitud": usuario.longitud
+                "longitud": usuario.longitud,
+                "foto_perfil": usuario.foto_perfil
             }
         }
 

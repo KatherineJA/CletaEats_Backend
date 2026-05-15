@@ -98,10 +98,6 @@ class PedidoService:
             else:
                 return {"exito": False, "mensaje": "No tenés permiso para cancelar este pedido"}
 
-        if nuevo_estado == "EN_CAMINO" and id_repartidor:
-            pedidos_activos = self.pedido_dao.contar_pedidos_activos_repartidor(id_repartidor)
-            if pedidos_activos > 0:
-                return {"exito": False, "mensaje": "Ya tenés un pedido activo. Debés entregarlo antes de aceptar otro."}
 
         ok = self.pedido_dao.actualizar_estado(id_pedido, nuevo_estado, id_repartidor)
         if not ok:

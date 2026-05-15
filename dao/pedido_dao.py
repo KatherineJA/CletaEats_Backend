@@ -99,29 +99,49 @@ class PedidoDAO:
                 sql = """
                       SELECT p.*,
                              r.nombre                     AS nombre_restaurante,
-                             (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0) \
-                              FROM DetallePedido dp2 \
-                                       JOIN Combo c2 ON dp2.id_combo = c2.id \
+                             rep_u.foto_perfil            AS foto_repartidor,
+                             (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0)
+                              FROM DetallePedido dp2
+                                       JOIN Combo c2 ON dp2.id_combo = c2.id
                               WHERE dp2.id_pedido = p.id) AS subtotal,
                              ROUND(
-                                     (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0) \
-                                      FROM DetallePedido dp2 \
-                                               JOIN Combo c2 ON dp2.id_combo = c2.id \
+                                     (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0)
+                                      FROM DetallePedido dp2
+                                               JOIN Combo c2 ON dp2.id_combo = c2.id
                                       WHERE dp2.id_pedido = p.id) * 0.13 + p.costo_envio * 0.13, 2
                              )                            AS iva,
                              ROUND(
-                                     (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0) \
-                                      FROM DetallePedido dp2 \
-                                               JOIN Combo c2 ON dp2.id_combo = c2.id \
+                                     (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0)
+                                      FROM DetallePedido dp2
+                                               JOIN Combo c2 ON dp2.id_combo = c2.id
                                       WHERE dp2.id_pedido = p.id) + p.costo_envio +
-                                     (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0) \
-                                      FROM DetallePedido dp2 \
-                                               JOIN Combo c2 ON dp2.id_combo = c2.id \
+                                     (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0)
+                                      FROM DetallePedido dp2
+                                               JOIN Combo c2 ON dp2.id_combo = c2.id
                                       WHERE dp2.id_pedido = p.id) * 0.13 + p.costo_envio * 0.13, 2
-                             )                            AS total
+                             )                            AS total,
+                             (SELECT tipo \
+                              FROM Calificacion
+                              WHERE id_pedido = p.id \
+                                AND id_evaluador = p.id_cliente \
+                                                             LIMIT 1) AS calificacion_dada
                       FROM Pedido p
-                               JOIN Restaurante r ON p.id_restaurante = r.id
+                          JOIN Restaurante r \
+                      ON p.id_restaurante = r.id
+                          LEFT JOIN Usuario rep_u ON p.id_repartidor = rep_u.id
                       WHERE p.id_cliente = %s
+                        AND (
+                          p.estado IN ('EN_PREPARACION' \
+                          , 'EN_CAMINO')
+                         OR (
+                          p.estado = 'ENTREGADO'
+                        AND NOT EXISTS (
+                          SELECT 1 FROM Calificacion
+                          WHERE id_pedido = p.id \
+                        AND id_evaluador = p.id_cliente
+                          )
+                          )
+                          )
                       ORDER BY p.hora_creacion DESC \
                       """
                 cursor.execute(sql, (id_cliente,))
@@ -138,25 +158,28 @@ class PedidoDAO:
         if conexion:
             try:
                 cursor = conexion.cursor(dictionary=True)
-                sql = """SELECT p.*,
-                                r.nombre                                                   AS nombre_restaurante,
-                                r.latitud                                                  AS lat_restaurante,
-                                r.longitud                                                 AS lon_restaurante,
-                                u.nombre                                                   AS nombre_cliente,
-                                (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0) \
-                                 FROM DetallePedido dp2 \
-                                          JOIN Combo c2 ON dp2.id_combo = c2.id \
-                                 WHERE dp2.id_pedido = p.id) + p.costo_envio +
-                                (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0) \
-                                 FROM DetallePedido dp2 \
-                                          JOIN Combo c2 ON dp2.id_combo = c2.id \
-                                 WHERE dp2.id_pedido = p.id) * 0.13 + p.costo_envio * 0.13 AS total
-                         FROM Pedido p
-                                  JOIN Restaurante r ON p.id_restaurante = r.id
-                                  JOIN Usuario u ON p.id_cliente = u.id
-                         WHERE p.estado = 'EN_PREPARACION' \
-                           AND p.id_repartidor IS NULL
-                         ORDER BY p.hora_creacion ASC"""
+                sql = """
+                    SELECT p.*,
+                           r.nombre AS nombre_restaurante,
+                           r.latitud AS lat_restaurante,
+                           r.longitud AS lon_restaurante,
+                           u.nombre AS nombre_cliente,
+                           u.foto_perfil AS foto_perfil,
+                           (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0)
+                            FROM DetallePedido dp2
+                            JOIN Combo c2 ON dp2.id_combo = c2.id
+                            WHERE dp2.id_pedido = p.id) + p.costo_envio +
+                           (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0)
+                            FROM DetallePedido dp2
+                            JOIN Combo c2 ON dp2.id_combo = c2.id
+                            WHERE dp2.id_pedido = p.id) * 0.13 + p.costo_envio * 0.13 AS total
+                    FROM Pedido p
+                    JOIN Restaurante r ON p.id_restaurante = r.id
+                    JOIN Usuario u ON p.id_cliente = u.id
+                    WHERE p.estado = 'EN_PREPARACION'
+                      AND p.id_repartidor IS NULL
+                    ORDER BY p.hora_creacion ASC
+                """
                 cursor.execute(sql)
                 return cursor.fetchall()
             except Exception as e:
@@ -171,22 +194,42 @@ class PedidoDAO:
         if conexion:
             try:
                 cursor = conexion.cursor(dictionary=True)
-                sql = """SELECT p.*,
-                                r.nombre                                                   AS nombre_restaurante,
-                                u.nombre                                                   AS nombre_cliente,
-                                (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0) \
-                                 FROM DetallePedido dp2 \
-                                          JOIN Combo c2 ON dp2.id_combo = c2.id \
-                                 WHERE dp2.id_pedido = p.id) + p.costo_envio +
-                                (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0) \
-                                 FROM DetallePedido dp2 \
-                                          JOIN Combo c2 ON dp2.id_combo = c2.id \
-                                 WHERE dp2.id_pedido = p.id) * 0.13 + p.costo_envio * 0.13 AS total
-                         FROM Pedido p
-                                  JOIN Restaurante r ON p.id_restaurante = r.id
-                                  JOIN Usuario u ON p.id_cliente = u.id
-                         WHERE p.id_repartidor = %s
-                         ORDER BY p.hora_creacion DESC"""
+                sql = """
+                      SELECT p.*,
+                             r.nombre                                                   AS nombre_restaurante,
+                             u.nombre                                                   AS nombre_cliente,
+                             u.foto_perfil                                              AS foto_cliente,
+                             (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0)
+                              FROM DetallePedido dp2
+                                       JOIN Combo c2 ON dp2.id_combo = c2.id
+                              WHERE dp2.id_pedido = p.id) + p.costo_envio +
+                             (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0)
+                              FROM DetallePedido dp2
+                                       JOIN Combo c2 ON dp2.id_combo = c2.id
+                              WHERE dp2.id_pedido = p.id) * 0.13 + p.costo_envio * 0.13 AS total,
+                             (SELECT tipo \
+                              FROM Calificacion
+                              WHERE id_pedido = p.id \
+                                AND id_evaluador = p.id_repartidor \
+                                                                                           LIMIT 1) AS calificacion_dada
+                      FROM Pedido p
+                          JOIN Restaurante r \
+                      ON p.id_restaurante = r.id
+                          JOIN Usuario u ON p.id_cliente = u.id
+                      WHERE p.id_repartidor = %s
+                        AND (
+                          p.estado = 'EN_CAMINO'
+                         OR (
+                          p.estado = 'ENTREGADO'
+                        AND NOT EXISTS (
+                          SELECT 1 FROM Calificacion
+                          WHERE id_pedido = p.id \
+                        AND id_evaluador = p.id_repartidor
+                          )
+                          )
+                          )
+                      ORDER BY p.hora_creacion DESC \
+                      """
                 cursor.execute(sql, (id_repartidor,))
                 return cursor.fetchall()
             except Exception as e:

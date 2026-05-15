@@ -1,6 +1,7 @@
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 import json
+import os
 
 from control import (
     auth_control,
@@ -73,6 +74,19 @@ class Router(BaseHTTPRequestHandler):
             parsed = urlparse(self.path)
             path = parsed.path
             query = parse_qs(parsed.query)
+
+            if path.startswith("/fotos_perfil/"):
+                ruta_archivo = path.lstrip("/")
+                if os.path.isfile(ruta_archivo):
+                    self.send_response(200)
+                    self.send_header("Content-Type", "image/jpeg")
+                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self.end_headers()
+                    with open(ruta_archivo, "rb") as f:
+                        self.wfile.write(f.read())
+                else:
+                    self._responder(404, {"exito": False, "mensaje": "Imagen no encontrada"})
+                return
 
             manejado = (
                 usuario_control.manejar_get(path, query, self._responder) or

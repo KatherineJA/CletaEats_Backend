@@ -49,6 +49,32 @@ def manejar_post(path, body, responder):
         responder(200, usuario_service.reactivar_repartidor(id_usuario))
         return True
 
+
+    elif path == "/usuario/foto":
+
+        import base64, os
+
+        id_usuario = body.get("id_usuario")
+
+        foto_b64 = body.get("foto_base64")
+
+        if not id_usuario or not foto_b64:
+            responder(400, {"exito": False, "mensaje": "Faltan datos"})
+            return True
+        try:
+            datos = base64.b64decode(foto_b64)
+            carpeta = "fotos_perfil"
+            os.makedirs(carpeta, exist_ok=True)
+            ruta = f"{carpeta}/usuario_{id_usuario}.jpg"
+            with open(ruta, "wb") as f:
+                f.write(datos)
+            url = f"/{ruta}"
+            usuario_service.guardar_url_foto(id_usuario, url)  # <- línea nueva
+            responder(200, {"exito": True, "url": url})
+        except Exception as e:
+            responder(500, {"exito": False, "mensaje": str(e)})
+        return True
+
     return False
 
 

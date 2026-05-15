@@ -12,9 +12,10 @@ class Usuario:
         self.rol = ""       # ADMIN / CLIENTE / REPARTIDOR / ENCARGADO
         self.latitud = None
         self.longitud = None
+        self.foto_perfil = None
 
     @classmethod
-    def nuevo(cls, cedula, nombre, correo, password, telefono, rol, latitud=None, longitud=None):
+    def nuevo(cls, cedula, nombre, correo, password, telefono, rol, latitud=None, longitud=None, foto_perfil=None):
         u = cls()
         u.cedula = cedula
         u.nombre = nombre
@@ -27,6 +28,7 @@ class Usuario:
         u.rol = rol
         u.latitud = latitud
         u.longitud = longitud
+        u.foto_perfil = foto_perfil
         return u
 
     def get_id(self): return self.id
