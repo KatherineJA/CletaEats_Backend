@@ -52,25 +52,17 @@ def manejar_post(path, body, responder):
 
 
     elif path == "/usuario/foto":
-
         import base64, os
-
         id_usuario = body.get("id_usuario")
-
         foto_b64 = body.get("foto_base64")
-
         if not id_usuario or not foto_b64:
             responder(400, {"exito": False, "mensaje": "Faltan datos"})
-
             return True
-
         try:
-
             usar_imgbb = os.environ.get("USAR_IMGBB", "false").lower() == "true"
-
             if usar_imgbb:
                 import requests
-                IMGBB_API_KEY = os.environ.get("762cb65c309088aa0ae0b13b42700171", "")
+                IMGBB_API_KEY = os.environ.get("IMGBB_API_KEY", "")
                 response = requests.post(
                     "https://api.imgbb.com/1/upload",
                     data={"key": IMGBB_API_KEY, "image": foto_b64}
