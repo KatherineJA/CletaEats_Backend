@@ -31,26 +31,40 @@ class UsuarioDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.execute("""SELECT id,
-                                         cedula,
-                                         nombre,
-                                         correo,
-                                         contrasena,
-                                         telefono,
-                                         rol,
-                                         latitud,
-                                         longitud,
-                                         foto_perfil
-                                  FROM Usuario
-                                  WHERE correo = %s""", (correo,))
+                cursor.execute("""SELECT id, cedula, nombre, correo, contrasena,
+                                         telefono, rol, latitud, longitud, foto_perfil
+                                  FROM Usuario WHERE correo = %s""", (correo,))
                 fila = cursor.fetchone()
                 if fila:
                     u = Usuario()
-                    u.id, u.cedula, u.nombre, u.correo, u.contrasena, u.telefono, u.rol, u.latitud, u.longitud, u.foto_perfil = fila
+                    u.id, u.cedula, u.nombre, u.correo, u.contrasena, \
+                    u.telefono, u.rol, u.latitud, u.longitud, u.foto_perfil = fila
                     return u
                 return None
             except Exception as e:
-                print(f"Error al buscar usuario: {e}")
+                print(f"Error al buscar usuario por correo: {e}")
+                return None
+            finally:
+                cursor.close()
+                conexion.close()
+
+    def buscar_por_telefono(self, telefono):
+        conexion = obtener_conexion()
+        if conexion:
+            try:
+                cursor = conexion.cursor()
+                cursor.execute("""SELECT id, cedula, nombre, correo, contrasena,
+                                         telefono, rol, latitud, longitud, foto_perfil
+                                  FROM Usuario WHERE telefono = %s""", (telefono,))
+                fila = cursor.fetchone()
+                if fila:
+                    u = Usuario()
+                    u.id, u.cedula, u.nombre, u.correo, u.contrasena, \
+                    u.telefono, u.rol, u.latitud, u.longitud, u.foto_perfil = fila
+                    return u
+                return None
+            except Exception as e:
+                print(f"Error al buscar usuario por telefono: {e}")
                 return None
             finally:
                 cursor.close()
@@ -64,7 +78,7 @@ class UsuarioDAO:
                 cursor.execute("SELECT id FROM Usuario WHERE cedula = %s", (cedula,))
                 return cursor.fetchone() is not None
             except Exception as e:
-                print(f"Error al buscar por cédula: {e}")
+                print(f"Error al buscar por cedula: {e}")
                 return False
             finally:
                 cursor.close()
@@ -75,22 +89,14 @@ class UsuarioDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.execute("""SELECT id,
-                                         cedula,
-                                         nombre,
-                                         correo,
-                                         contrasena,
-                                         telefono,
-                                         rol,
-                                         latitud,
-                                         longitud,
-                                         foto_perfil
-                                  FROM Usuario
-                                  WHERE id = %s""", (id_usuario,))
+                cursor.execute("""SELECT id, cedula, nombre, correo, contrasena,
+                                         telefono, rol, latitud, longitud, foto_perfil
+                                  FROM Usuario WHERE id = %s""", (id_usuario,))
                 fila = cursor.fetchone()
                 if fila:
                     u = Usuario()
-                    u.id, u.cedula, u.nombre, u.correo, u.contrasena, u.telefono, u.rol, u.latitud, u.longitud, u.foto_perfil = fila
+                    u.id, u.cedula, u.nombre, u.correo, u.contrasena, \
+                    u.telefono, u.rol, u.latitud, u.longitud, u.foto_perfil = fila
                     return u
                 return None
             except Exception as e:
@@ -132,6 +138,38 @@ class UsuarioDAO:
                 cursor.close()
                 conexion.close()
 
+    def actualizar_nombre(self, id_usuario, nombre):
+        conexion = obtener_conexion()
+        if conexion:
+            try:
+                cursor = conexion.cursor()
+                cursor.execute("UPDATE Usuario SET nombre = %s WHERE id = %s",
+                               (nombre, id_usuario))
+                conexion.commit()
+                return True
+            except Exception as e:
+                print(f"Error al actualizar nombre: {e}")
+                return False
+            finally:
+                cursor.close()
+                conexion.close()
+
+    def actualizar_contrasena(self, id_usuario, contrasena_hash):
+        conexion = obtener_conexion()
+        if conexion:
+            try:
+                cursor = conexion.cursor()
+                cursor.execute("UPDATE Usuario SET contrasena = %s WHERE id = %s",
+                               (contrasena_hash, id_usuario))
+                conexion.commit()
+                return True
+            except Exception as e:
+                print(f"Error al actualizar contrasena: {e}")
+                return False
+            finally:
+                cursor.close()
+                conexion.close()
+
     def actualizar_tarjeta_cliente(self, id_usuario, numero_tarjeta):
         conexion = obtener_conexion()
         if conexion:
@@ -164,21 +202,6 @@ class UsuarioDAO:
                 cursor.close()
                 conexion.close()
 
-    def actualizar_nombre(self, id_usuario, nombre):
-        conexion = obtener_conexion()
-        if conexion:
-            try:
-                cursor = conexion.cursor()
-                cursor.execute("UPDATE Usuario SET nombre = %s WHERE id = %s", (nombre, id_usuario))
-                conexion.commit()
-                return True
-            except Exception as e:
-                print(f"Error al actualizar nombre: {e}")
-                return False
-            finally:
-                cursor.close()
-                conexion.close()
-
     def listar_por_rol_y_estado(self, rol, estado):
         conexion = obtener_conexion()
         if conexion:
@@ -186,9 +209,8 @@ class UsuarioDAO:
                 cursor = conexion.cursor(dictionary=True)
                 cursor.execute("""SELECT id, cedula, nombre
                                   FROM Usuario u
-                                           JOIN Cliente c ON u.id = c.id_usuario
-                                  WHERE u.rol = %s
-                                    AND c.estado = %s""", (rol, estado))
+                                       JOIN Cliente c ON u.id = c.id_usuario
+                                  WHERE u.rol = %s AND c.estado = %s""", (rol, estado))
                 return cursor.fetchall()
             finally:
                 cursor.close()
@@ -199,10 +221,10 @@ class UsuarioDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.execute("UPDATE Cliente SET estado = %s WHERE id_usuario = %s", (nuevo_estado, id_usuario))
+                cursor.execute("UPDATE Cliente SET estado = %s WHERE id_usuario = %s",
+                               (nuevo_estado, id_usuario))
                 conexion.commit()
                 return True
             finally:
                 cursor.close()
                 conexion.close()
-

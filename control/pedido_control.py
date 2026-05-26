@@ -10,18 +10,25 @@ def manejar_post(path, body, responder):
         if not all(body.get(c) is not None for c in campos):
             responder(400, {"exito": False, "mensaje": "Faltan campos requeridos"})
             return True
+
+        metodo_pago = body.get("metodo_pago", "EFECTIVO")
+        numero_tarjeta = body.get("numero_tarjeta")
+
         responder(200, pedido_service.crear_pedido(
             body["id_cliente"], body["id_restaurante"],
             body["lat_restaurante"], body["lon_restaurante"],
             body["lat_destino"], body["lon_destino"],
-            body["items"]
+            body["items"],
+            metodo_pago=metodo_pago,
+            numero_tarjeta=numero_tarjeta
         ))
         return True
 
     elif path == "/pedido/estado":
         campos = ["id_pedido", "estado", "id_solicitante", "rol_solicitante"]
         if not all(body.get(c) for c in campos):
-            responder(400, {"exito": False, "mensaje": "Faltan campos requeridos: id_pedido, estado, id_solicitante, rol_solicitante"})
+            responder(400, {"exito": False,
+                            "mensaje": "Faltan campos requeridos: id_pedido, estado, id_solicitante, rol_solicitante"})
             return True
         responder(200, pedido_service.cambiar_estado(
             body["id_pedido"],

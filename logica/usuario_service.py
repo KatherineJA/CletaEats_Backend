@@ -6,8 +6,8 @@ from dao.repartidor_dao import RepartidorDAO
 class UsuarioService:
 
     def __init__(self):
-        self.usuario_dao = UsuarioDAO()
-        self.cliente_dao = ClienteDAO()
+        self.usuario_dao    = UsuarioDAO()
+        self.cliente_dao    = ClienteDAO()
         self.repartidor_dao = RepartidorDAO()
 
     def guardar_url_foto(self, id_usuario, url):
@@ -17,24 +17,36 @@ class UsuarioService:
         usuario = self.usuario_dao.buscar_por_id(id_usuario)
         if not usuario:
             return {"exito": False, "mensaje": "Usuario no encontrado"}
+
+        numero_tarjeta = None
+        if usuario.rol == "CLIENTE":
+            cliente = self.cliente_dao.buscar_por_id(id_usuario)
+            if cliente and cliente.numero_tarjeta:
+                numero_tarjeta = cliente.numero_tarjeta[-4:]
+        elif usuario.rol == "REPARTIDOR":
+            repartidor = self.repartidor_dao.buscar_por_id(id_usuario)
+            if repartidor and repartidor.numero_tarjeta:
+                numero_tarjeta = repartidor.numero_tarjeta[-4:]
+
         return {
             "exito": True,
             "datos": {
-                "id": usuario.id,
-                "cedula": usuario.cedula,
-                "nombre": usuario.nombre,
-                "correo": usuario.correo,
-                "telefono": usuario.telefono,
-                "rol": usuario.rol,
-                "latitud": usuario.latitud,
-                "longitud": usuario.longitud,
-                "foto_perfil": usuario.foto_perfil
+                "id":            usuario.id,
+                "cedula":        usuario.cedula,
+                "nombre":        usuario.nombre,
+                "correo":        usuario.correo,
+                "telefono":      usuario.telefono,
+                "rol":           usuario.rol,
+                "latitud":       usuario.latitud,
+                "longitud":      usuario.longitud,
+                "foto_perfil":   usuario.foto_perfil,
+                "numero_tarjeta": numero_tarjeta
             }
         }
 
     def editar_perfil(self, id_usuario, telefono, nombre=None, latitud=None, longitud=None):
         if not telefono:
-            return {"exito": False, "mensaje": "El teléfono es requerido"}
+            return {"exito": False, "mensaje": "El telefono es requerido"}
         ok = self.usuario_dao.actualizar_perfil(id_usuario, telefono, latitud, longitud)
         if ok and nombre:
             self.usuario_dao.actualizar_nombre(id_usuario, nombre)
@@ -42,13 +54,13 @@ class UsuarioService:
 
     def editar_tarjeta_cliente(self, id_usuario, numero_tarjeta):
         if not numero_tarjeta:
-            return {"exito": False, "mensaje": "El número de tarjeta es requerido"}
+            return {"exito": False, "mensaje": "El numero de tarjeta es requerido"}
         ok = self.usuario_dao.actualizar_tarjeta_cliente(id_usuario, numero_tarjeta)
         return {"exito": ok, "mensaje": "Tarjeta actualizada" if ok else "Error al actualizar tarjeta"}
 
     def editar_tarjeta_repartidor(self, id_usuario, numero_tarjeta):
         if not numero_tarjeta:
-            return {"exito": False, "mensaje": "El número de tarjeta es requerido"}
+            return {"exito": False, "mensaje": "El numero de tarjeta es requerido"}
         ok = self.usuario_dao.actualizar_tarjeta_repartidor(id_usuario, numero_tarjeta)
         return {"exito": ok, "mensaje": "Tarjeta actualizada" if ok else "Error al actualizar tarjeta"}
 
@@ -63,7 +75,7 @@ class UsuarioService:
         if not cliente:
             return {"exito": False, "mensaje": "Cliente no encontrado"}
         if cliente.esta_activo():
-            return {"exito": False, "mensaje": "El cliente ya está activo"}
+            return {"exito": False, "mensaje": "El cliente ya esta activo"}
 
         ok = self.cliente_dao.actualizar_estado(id_usuario, "ACTIVO")
         return {"exito": ok, "mensaje": "Cliente reactivado correctamente" if ok else "Error al reactivar"}
@@ -79,7 +91,7 @@ class UsuarioService:
         if not repartidor:
             return {"exito": False, "mensaje": "Repartidor no encontrado"}
         if repartidor.get_estado() != "SUSPENDIDO":
-            return {"exito": False, "mensaje": "El repartidor no está suspendido"}
+            return {"exito": False, "mensaje": "El repartidor no esta suspendido"}
 
         ok = self.repartidor_dao.actualizar_estado(id_usuario, "DISPONIBLE")
         return {"exito": ok, "mensaje": "Repartidor reactivado correctamente" if ok else "Error al reactivar"}
