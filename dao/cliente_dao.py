@@ -9,9 +9,8 @@ class ClienteDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                sql = "INSERT INTO Cliente (id_usuario, numero_tarjeta, estado) VALUES (%s, %s, %s)"
-                valores = (cliente.id_usuario, cliente.numero_tarjeta, cliente.estado)
-                cursor.execute(sql, valores)
+                cursor.callproc('sp_cliente_guardar',
+                                (cliente.id_usuario, cliente.numero_tarjeta, cliente.estado))
                 conexion.commit()
                 return cliente
             except Exception as e:
@@ -26,12 +25,13 @@ class ClienteDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.execute("SELECT id_usuario, numero_tarjeta, estado FROM Cliente WHERE id_usuario = %s", (id_usuario,))
-                fila = cursor.fetchone()
-                if fila:
-                    c = Cliente()
-                    c.id_usuario, c.numero_tarjeta, c.estado = fila
-                    return c
+                cursor.callproc('sp_cliente_buscar_por_id', (id_usuario,))
+                for result in cursor.stored_results():
+                    fila = result.fetchone()
+                    if fila:
+                        c = Cliente()
+                        c.id_usuario, c.numero_tarjeta, c.estado = fila
+                        return c
                 return None
             except Exception as e:
                 print(f"Error al buscar cliente: {e}")
@@ -45,7 +45,7 @@ class ClienteDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.execute("UPDATE Cliente SET estado = %s WHERE id_usuario = %s", (estado, id_usuario))
+                cursor.callproc('sp_cliente_actualizar_estado', (id_usuario, estado))
                 conexion.commit()
                 return True
             except Exception as e:
@@ -60,11 +60,10 @@ class ClienteDAO:
         if conexion:
             try:
                 cursor = conexion.cursor(dictionary=True)
-                sql = """SELECT u.id, u.cedula, u.nombre
-                         FROM Usuario u JOIN Cliente c ON u.id = c.id_usuario
-                         WHERE c.estado = 'ACTIVO'"""
-                cursor.execute(sql)
-                return cursor.fetchall()
+                cursor.callproc('sp_cliente_listar_activos')
+                for result in cursor.stored_results():
+                    return result.fetchall()
+                return []
             except Exception as e:
                 print(f"Error al listar clientes activos: {e}")
                 return []
@@ -77,11 +76,10 @@ class ClienteDAO:
         if conexion:
             try:
                 cursor = conexion.cursor(dictionary=True)
-                sql = """SELECT u.id, u.cedula, u.nombre
-                         FROM Usuario u JOIN Cliente c ON u.id = c.id_usuario
-                         WHERE c.estado = 'SUSPENDIDO'"""
-                cursor.execute(sql)
-                return cursor.fetchall()
+                cursor.callproc('sp_cliente_listar_suspendidos')
+                for result in cursor.stored_results():
+                    return result.fetchall()
+                return []
             except Exception as e:
                 print(f"Error al listar clientes suspendidos: {e}")
                 return []

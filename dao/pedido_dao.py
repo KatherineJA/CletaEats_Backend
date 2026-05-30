@@ -7,14 +7,16 @@ class PedidoDAO:
         conexion = obtener_conexion()
         if conexion:
             try:
-                cursor = conexion.cursor()
-                sql = """INSERT INTO Pedido (id_cliente, id_restaurante, estado,
-                                             latitud_destino, longitud_destino, distancia_km, costo_envio)
-                         VALUES (%s, %s, 'EN_PREPARACION', %s, %s, %s, %s)"""
-                cursor.execute(sql, (id_cliente, id_restaurante, lat_destino, lon_destino,
-                                     round(distancia_km, 4), costo_envio))
+                cursor = conexion.cursor(dictionary=True)
+                cursor.callproc('sp_pedido_guardar', (
+                    id_cliente, id_restaurante,
+                    lat_destino, lon_destino,
+                    round(distancia_km, 4), costo_envio
+                ))
                 conexion.commit()
-                return cursor.lastrowid
+                for result in cursor.stored_results():
+                    fila = result.fetchone()
+                    return fila['id'] if fila else None
             except Exception as e:
                 print(f"Error al guardar pedido: {e}")
                 return None
@@ -26,11 +28,12 @@ class PedidoDAO:
         conexion = obtener_conexion()
         if conexion:
             try:
-                cursor = conexion.cursor()
-                cursor.execute("""INSERT INTO DetallePedido (id_pedido, id_combo, cantidad)
-                                  VALUES (%s, %s, %s)""", (id_pedido, id_combo, cantidad))
+                cursor = conexion.cursor(dictionary=True)
+                cursor.callproc('sp_pedido_guardar_detalle', (id_pedido, id_combo, cantidad))
                 conexion.commit()
-                return cursor.lastrowid
+                for result in cursor.stored_results():
+                    fila = result.fetchone()
+                    return fila['id'] if fila else None
             except Exception as e:
                 print(f"Error al guardar detalle: {e}")
                 return None
@@ -43,8 +46,7 @@ class PedidoDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.execute("""INSERT INTO PreferenciaDetalle (id_detalle_pedido, id_valor_opcion)
-                                  VALUES (%s, %s)""", (id_detalle_pedido, id_valor_opcion))
+                cursor.callproc('sp_pedido_guardar_preferencia', (id_detalle_pedido, id_valor_opcion))
                 conexion.commit()
                 return True
             except Exception as e:
@@ -59,15 +61,8 @@ class PedidoDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                if nuevo_estado == "EN_CAMINO" and id_repartidor:
-                    cursor.execute("""UPDATE Pedido SET estado = %s, id_repartidor = %s
-                                      WHERE id = %s""", (nuevo_estado, id_repartidor, id_pedido))
-                elif nuevo_estado == "ENTREGADO":
-                    cursor.execute("""UPDATE Pedido SET estado = %s, hora_entrega = NOW()
-                                      WHERE id = %s""", (nuevo_estado, id_pedido))
-                else:
-                    cursor.execute("UPDATE Pedido SET estado = %s WHERE id = %s",
-                                   (nuevo_estado, id_pedido))
+                cursor.callproc('sp_pedido_actualizar_estado_completo',
+                                (id_pedido, nuevo_estado, id_repartidor))
                 conexion.commit()
                 return True
             except Exception as e:
@@ -82,8 +77,10 @@ class PedidoDAO:
         if conexion:
             try:
                 cursor = conexion.cursor(dictionary=True)
-                cursor.execute("SELECT * FROM Pedido WHERE id = %s", (id_pedido,))
-                return cursor.fetchone()
+                cursor.callproc('sp_pedido_buscar_por_id', (id_pedido,))
+                for result in cursor.stored_results():
+                    return result.fetchone()
+                return None
             except Exception as e:
                 print(f"Error al buscar pedido: {e}")
                 return None
@@ -96,56 +93,10 @@ class PedidoDAO:
         if conexion:
             try:
                 cursor = conexion.cursor(dictionary=True)
-                sql = """
-                      SELECT p.*,
-                             r.nombre                     AS nombre_restaurante,
-                             rep_u.foto_perfil            AS foto_repartidor,
-                             (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0)
-                              FROM DetallePedido dp2
-                                       JOIN Combo c2 ON dp2.id_combo = c2.id
-                              WHERE dp2.id_pedido = p.id) AS subtotal,
-                             ROUND(
-                                     (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0)
-                                      FROM DetallePedido dp2
-                                               JOIN Combo c2 ON dp2.id_combo = c2.id
-                                      WHERE dp2.id_pedido = p.id) * 0.13 + p.costo_envio * 0.13, 2
-                             )                            AS iva,
-                             ROUND(
-                                     (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0)
-                                      FROM DetallePedido dp2
-                                               JOIN Combo c2 ON dp2.id_combo = c2.id
-                                      WHERE dp2.id_pedido = p.id) + p.costo_envio +
-                                     (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0)
-                                      FROM DetallePedido dp2
-                                               JOIN Combo c2 ON dp2.id_combo = c2.id
-                                      WHERE dp2.id_pedido = p.id) * 0.13 + p.costo_envio * 0.13, 2
-                             )                            AS total,
-                             (SELECT tipo \
-                              FROM Calificacion
-                              WHERE id_pedido = p.id \
-                                AND id_evaluador = p.id_cliente \
-                                                             LIMIT 1) AS calificacion_dada
-                      FROM Pedido p
-                          JOIN Restaurante r \
-                      ON p.id_restaurante = r.id
-                          LEFT JOIN Usuario rep_u ON p.id_repartidor = rep_u.id
-                      WHERE p.id_cliente = %s
-                        AND (
-                          p.estado IN ('EN_PREPARACION' \
-                          , 'EN_CAMINO')
-                         OR (
-                          p.estado = 'ENTREGADO'
-                        AND NOT EXISTS (
-                          SELECT 1 FROM Calificacion
-                          WHERE id_pedido = p.id \
-                        AND id_evaluador = p.id_cliente
-                          )
-                          )
-                          )
-                      ORDER BY p.hora_creacion DESC \
-                      """
-                cursor.execute(sql, (id_cliente,))
-                return cursor.fetchall()
+                cursor.callproc('sp_pedido_listar_por_cliente_activos', (id_cliente,))
+                for result in cursor.stored_results():
+                    return result.fetchall()
+                return []
             except Exception as e:
                 print(f"Error al listar pedidos por cliente: {e}")
                 return []
@@ -158,30 +109,10 @@ class PedidoDAO:
         if conexion:
             try:
                 cursor = conexion.cursor(dictionary=True)
-                sql = """
-                    SELECT p.*,
-                           r.nombre AS nombre_restaurante,
-                           r.latitud AS lat_restaurante,
-                           r.longitud AS lon_restaurante,
-                           u.nombre AS nombre_cliente,
-                           u.foto_perfil AS foto_perfil,
-                           (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0)
-                            FROM DetallePedido dp2
-                            JOIN Combo c2 ON dp2.id_combo = c2.id
-                            WHERE dp2.id_pedido = p.id) + p.costo_envio +
-                           (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0)
-                            FROM DetallePedido dp2
-                            JOIN Combo c2 ON dp2.id_combo = c2.id
-                            WHERE dp2.id_pedido = p.id) * 0.13 + p.costo_envio * 0.13 AS total
-                    FROM Pedido p
-                    JOIN Restaurante r ON p.id_restaurante = r.id
-                    JOIN Usuario u ON p.id_cliente = u.id
-                    WHERE p.estado = 'EN_PREPARACION'
-                      AND p.id_repartidor IS NULL
-                    ORDER BY p.hora_creacion ASC
-                """
-                cursor.execute(sql)
-                return cursor.fetchall()
+                cursor.callproc('sp_pedido_listar_disponibles')
+                for result in cursor.stored_results():
+                    return result.fetchall()
+                return []
             except Exception as e:
                 print(f"Error al listar pedidos disponibles: {e}")
                 return []
@@ -194,44 +125,10 @@ class PedidoDAO:
         if conexion:
             try:
                 cursor = conexion.cursor(dictionary=True)
-                sql = """
-                      SELECT p.*,
-                             r.nombre                                                   AS nombre_restaurante,
-                             u.nombre                                                   AS nombre_cliente,
-                             u.foto_perfil                                              AS foto_cliente,
-                             (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0)
-                              FROM DetallePedido dp2
-                                       JOIN Combo c2 ON dp2.id_combo = c2.id
-                              WHERE dp2.id_pedido = p.id) + p.costo_envio +
-                             (SELECT COALESCE(SUM(dp2.cantidad * c2.precio), 0)
-                              FROM DetallePedido dp2
-                                       JOIN Combo c2 ON dp2.id_combo = c2.id
-                              WHERE dp2.id_pedido = p.id) * 0.13 + p.costo_envio * 0.13 AS total,
-                             (SELECT tipo \
-                              FROM Calificacion
-                              WHERE id_pedido = p.id \
-                                AND id_evaluador = p.id_repartidor \
-                                                                                           LIMIT 1) AS calificacion_dada
-                      FROM Pedido p
-                          JOIN Restaurante r \
-                      ON p.id_restaurante = r.id
-                          JOIN Usuario u ON p.id_cliente = u.id
-                      WHERE p.id_repartidor = %s
-                        AND (
-                          p.estado = 'EN_CAMINO'
-                         OR (
-                          p.estado = 'ENTREGADO'
-                        AND NOT EXISTS (
-                          SELECT 1 FROM Calificacion
-                          WHERE id_pedido = p.id \
-                        AND id_evaluador = p.id_repartidor
-                          )
-                          )
-                          )
-                      ORDER BY p.hora_creacion DESC \
-                      """
-                cursor.execute(sql, (id_repartidor,))
-                return cursor.fetchall()
+                cursor.callproc('sp_pedido_listar_por_repartidor_activos', (id_repartidor,))
+                for result in cursor.stored_results():
+                    return result.fetchall()
+                return []
             except Exception as e:
                 print(f"Error al listar pedidos por repartidor: {e}")
                 return []
@@ -244,22 +141,18 @@ class PedidoDAO:
         if conexion:
             try:
                 cursor = conexion.cursor(dictionary=True)
-                sql = """SELECT dp.id, dp.cantidad, c.nombre AS combo, c.precio,
-                                c.numero AS numero_combo
-                         FROM DetallePedido dp
-                         JOIN Combo c ON dp.id_combo = c.id
-                         WHERE dp.id_pedido = %s"""
-                cursor.execute(sql, (id_pedido,))
-                detalles = cursor.fetchall()
+                cursor.callproc('sp_pedido_listar_detalles_con_preferencias', (id_pedido,))
+                detalles = []
+                for result in cursor.stored_results():
+                    detalles = result.fetchall()
+
                 for detalle in detalles:
                     cursor2 = conexion.cursor(dictionary=True)
-                    cursor2.execute("""SELECT vo.descripcion, vo.costo_adicional, oc.nombre AS opcion
-                                       FROM PreferenciaDetalle pd
-                                       JOIN ValorOpcion vo ON pd.id_valor_opcion = vo.id
-                                       JOIN OpcionCombo oc ON vo.id_opcion = oc.id
-                                       WHERE pd.id_detalle_pedido = %s""", (detalle['id'],))
-                    detalle['preferencias'] = cursor2.fetchall()
+                    cursor2.callproc('sp_pedido_preferencias_por_detalle', (detalle['id'],))
+                    for r in cursor2.stored_results():
+                        detalle['preferencias'] = r.fetchall()
                     cursor2.close()
+
                 return detalles
             except Exception as e:
                 print(f"Error al listar detalles: {e}")
@@ -273,10 +166,9 @@ class PedidoDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.execute("""SELECT COUNT(*) FROM Pedido
-                                  WHERE id_repartidor = %s AND estado = 'EN_CAMINO'""",
-                               (id_repartidor,))
-                return cursor.fetchone()[0]
+                cursor.execute("SELECT fn_pedido_contar_activos_repartidor(%s)", (id_repartidor,))
+                fila = cursor.fetchone()
+                return fila[0] if fila else 0
             except Exception as e:
                 print(f"Error al contar pedidos activos: {e}")
                 return 0

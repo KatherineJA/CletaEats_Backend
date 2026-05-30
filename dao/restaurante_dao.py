@@ -8,10 +8,8 @@ class RestauranteDAO:
         conexion = obtener_conexion()
         if conexion:
             try:
-                cursor = conexion.cursor()
-                sql = """INSERT INTO Restaurante (nombre, cedula_juridica, direccion, tipo_comida, latitud, longitud, imagen, id_encargado)
-                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"""
-                valores = (
+                cursor = conexion.cursor(dictionary=True)
+                cursor.callproc('sp_restaurante_guardar', (
                     restaurante.nombre,
                     restaurante.cedula_juridica,
                     restaurante.direccion,
@@ -20,10 +18,12 @@ class RestauranteDAO:
                     restaurante.longitud,
                     restaurante.imagen,
                     restaurante.id_encargado
-                )
-                cursor.execute(sql, valores)
+                ))
                 conexion.commit()
-                restaurante.set_id(cursor.lastrowid)
+                for result in cursor.stored_results():
+                    fila = result.fetchone()
+                    if fila:
+                        restaurante.set_id(fila['id'])
                 return restaurante
             except Exception as e:
                 print(f"Error al guardar restaurante: {e}")
@@ -37,8 +37,10 @@ class RestauranteDAO:
         if conexion:
             try:
                 cursor = conexion.cursor(dictionary=True)
-                cursor.execute("SELECT id, nombre, cedula_juridica, direccion, tipo_comida, latitud, longitud, imagen FROM Restaurante")
-                return cursor.fetchall()
+                cursor.callproc('sp_restaurante_listar_todos')
+                for result in cursor.stored_results():
+                    return result.fetchall()
+                return []
             except Exception as e:
                 print(f"Error al listar restaurantes: {e}")
                 return []
@@ -51,8 +53,10 @@ class RestauranteDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.execute("SELECT id FROM Restaurante WHERE cedula_juridica = %s", (cedula_juridica,))
-                return cursor.fetchone() is not None
+                cursor.callproc('sp_restaurante_buscar_por_cedula_juridica', (cedula_juridica,))
+                for result in cursor.stored_results():
+                    return result.fetchone() is not None
+                return False
             except Exception as e:
                 print(f"Error al buscar restaurante: {e}")
                 return False
@@ -65,8 +69,10 @@ class RestauranteDAO:
         if conexion:
             try:
                 cursor = conexion.cursor(dictionary=True)
-                cursor.execute("SELECT * FROM Restaurante WHERE id = %s", (id_restaurante,))
-                return cursor.fetchone()
+                cursor.callproc('sp_restaurante_buscar_por_id', (id_restaurante,))
+                for result in cursor.stored_results():
+                    return result.fetchone()
+                return None
             except Exception as e:
                 print(f"Error al buscar restaurante por id: {e}")
                 return None

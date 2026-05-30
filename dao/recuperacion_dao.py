@@ -2,17 +2,14 @@ from datos.conexion import obtener_conexion
 
 
 class RecuperacionDAO:
+
     def guardar(self, id_usuario, codigo, expira):
         conexion = obtener_conexion()
         if not conexion:
             return False
         try:
             cursor = conexion.cursor()
-            cursor.execute(
-                """REPLACE INTO RecuperacionPassword (id_usuario, codigo, expira, verificado)
-                   VALUES (%s, %s, %s, 0)""",
-                (id_usuario, codigo, expira)
-            )
+            cursor.callproc('sp_recuperacion_guardar', (id_usuario, codigo, expira))
             conexion.commit()
             return True
         except Exception as e:
@@ -28,11 +25,10 @@ class RecuperacionDAO:
             return None
         try:
             cursor = conexion.cursor(dictionary=True)
-            cursor.execute(
-                "SELECT id_usuario, codigo, expira, verificado FROM RecuperacionPassword WHERE id_usuario = %s",
-                (id_usuario,)
-            )
-            return cursor.fetchone()
+            cursor.callproc('sp_recuperacion_buscar_por_usuario', (id_usuario,))
+            for result in cursor.stored_results():
+                return result.fetchone()
+            return None
         except Exception as e:
             print(f"[RecuperacionDAO] Error al buscar: {e}")
             return None
@@ -46,10 +42,7 @@ class RecuperacionDAO:
             return False
         try:
             cursor = conexion.cursor()
-            cursor.execute(
-                "UPDATE RecuperacionPassword SET verificado = 1 WHERE id_usuario = %s",
-                (id_usuario,)
-            )
+            cursor.callproc('sp_recuperacion_marcar_verificado', (id_usuario,))
             conexion.commit()
             return True
         except Exception as e:
@@ -65,10 +58,7 @@ class RecuperacionDAO:
             return False
         try:
             cursor = conexion.cursor()
-            cursor.execute(
-                "DELETE FROM RecuperacionPassword WHERE id_usuario = %s",
-                (id_usuario,)
-            )
+            cursor.callproc('sp_recuperacion_eliminar', (id_usuario,))
             conexion.commit()
             return True
         except Exception as e:

@@ -9,9 +9,12 @@ class RepartidorDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                sql = "INSERT INTO Repartidor (id_usuario, numero_tarjeta, estado, kilometros_diarios) VALUES (%s, %s, %s, %s)"
-                valores = (repartidor.id_usuario, repartidor.numero_tarjeta, repartidor.estado, repartidor.kilometros_diarios)
-                cursor.execute(sql, valores)
+                cursor.callproc('sp_repartidor_guardar', (
+                    repartidor.id_usuario,
+                    repartidor.numero_tarjeta,
+                    repartidor.estado,
+                    repartidor.kilometros_diarios
+                ))
                 conexion.commit()
                 return repartidor
             except Exception as e:
@@ -26,12 +29,14 @@ class RepartidorDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.execute("SELECT id_usuario, numero_tarjeta, estado, kilometros_diarios FROM Repartidor WHERE id_usuario = %s", (id_usuario,))
-                fila = cursor.fetchone()
-                if fila:
-                    r = Repartidor()
-                    r.id_usuario, r.numero_tarjeta, r.estado, r.kilometros_diarios = fila
-                    return r
+                cursor.callproc('sp_repartidor_buscar_por_id', (id_usuario,))
+                for result in cursor.stored_results():
+                    fila = result.fetchone()
+                    if fila:
+                        r = Repartidor()
+                        r.id_usuario, r.numero_tarjeta, r.estado, r.kilometros_diarios, \
+                        _, _, _ = fila  # nombre, latitud, longitud los ignora (son de Usuario)
+                        return r
                 return None
             except Exception as e:
                 print(f"Error al buscar repartidor: {e}")
@@ -45,7 +50,7 @@ class RepartidorDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.execute("UPDATE Repartidor SET estado = %s WHERE id_usuario = %s", (estado, id_usuario))
+                cursor.callproc('sp_repartidor_actualizar_estado', (id_usuario, estado))
                 conexion.commit()
                 return True
             except Exception as e:
@@ -60,18 +65,10 @@ class RepartidorDAO:
         if conexion:
             try:
                 cursor = conexion.cursor(dictionary=True)
-                sql = """
-                    SELECT u.id, u.nombre, u.cedula, u.latitud, u.longitud, r.kilometros_diarios
-                    FROM Usuario u
-                    JOIN Repartidor r ON u.id = r.id_usuario
-                    WHERE r.estado = 'DISPONIBLE'
-                      AND (
-                          SELECT COUNT(*) FROM Calificacion
-                          WHERE id_evaluado = u.id AND tipo = 'MALO'
-                      ) < 4
-                """
-                cursor.execute(sql)
-                return cursor.fetchall()
+                cursor.callproc('sp_repartidor_listar_disponibles_filtrado')
+                for result in cursor.stored_results():
+                    return result.fetchall()
+                return []
             except Exception as e:
                 print(f"Error al listar repartidores disponibles: {e}")
                 return []
@@ -84,17 +81,10 @@ class RepartidorDAO:
         if conexion:
             try:
                 cursor = conexion.cursor(dictionary=True)
-                sql = """
-                    SELECT u.id, u.cedula, u.nombre
-                    FROM Usuario u
-                    JOIN Repartidor r ON u.id = r.id_usuario
-                    WHERE (
-                        SELECT COUNT(*) FROM Calificacion
-                        WHERE id_evaluado = u.id AND tipo = 'MALO'
-                    ) = 0
-                """
-                cursor.execute(sql)
-                return cursor.fetchall()
+                cursor.callproc('sp_repartidor_listar_sin_malos')
+                for result in cursor.stored_results():
+                    return result.fetchall()
+                return []
             except Exception as e:
                 print(f"Error al listar repartidores limpios: {e}")
                 return []
