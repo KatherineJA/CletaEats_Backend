@@ -34,3 +34,16 @@ class RestauranteService:
             combo['opciones'] = self.combo_dao.listar_opciones_por_combo(combo['id'])
 
         return {"exito": True, "restaurante": restaurante, "combos": combos}
+
+    def asociar_encargado_a_restaurante(self, id_restaurante, id_encargado):
+        """
+        Vincula un encargado existente a un restaurante en la base de datos.
+        """
+        if not id_restaurante or not id_encargado:
+            return {"exito": False, "mensaje": "ID de restaurante e ID de encargado son requeridos"}
+
+        ok = self.restaurante_dao.actualizar_encargado(id_restaurante, id_encargado)
+        return {
+            "exito": ok,
+            "mensaje": "Encargado asignado al restaurante con éxito" if ok else "Error al asociar el encargado en la base de datos"
+        }

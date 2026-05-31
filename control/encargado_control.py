@@ -1,7 +1,9 @@
-#encargado_control.py
+# encargado_control.py
 from logica.encargado_service import EncargadoService
+from logica.restaurante_service import RestauranteService  # <-- Corregido el import aquí
 
 encargado_service = EncargadoService()
+restaurante_service = RestauranteService()  # <-- Instanciamos el servicio aquí
 
 
 def manejar_post(path, body, responder):
@@ -10,11 +12,24 @@ def manejar_post(path, body, responder):
         if not all(body.get(c) for c in campos):
             responder(400, {"exito": False, "mensaje": "Faltan campos requeridos"})
             return True
-        responder(200, encargado_service.registrar_encargado(
+
+        # 1. Guardamos primero el diccionario que retorna el método en la variable 'resultado'
+        resultado = encargado_service.registrar_encargado(
             body["cedula"], body["nombre"], body["correo"], body["password"],
             body["telefono"], body["id_restaurante"],
             body.get("latitud"), body.get("longitud")
-        ))
+        )
+
+        # 2. Si el encargado se creó bien, hacemos la actualización cruzada en Restaurante
+        if resultado.get("exito"):
+            id_usuario_creado = resultado.get("id")  # El ID autogenerado del nuevo encargado
+            id_restaurante_existente = body["id_restaurante"]
+
+            # Ejecutamos la actualización en la tabla Restaurante
+            restaurante_service.asociar_encargado_a_restaurante(id_restaurante_existente, id_usuario_creado)
+
+        # 3. Respondemos al frontend una única vez al puro final del flujo
+        responder(200, resultado)
         return True
 
     elif path == "/combo":
@@ -61,6 +76,7 @@ def manejar_get(path, query, responder):
         return True
 
     return False
+
 
 def obtener_kpis_principales(self):
     return {

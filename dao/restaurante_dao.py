@@ -17,7 +17,6 @@ class RestauranteDAO:
                     restaurante.latitud,
                     restaurante.longitud,
                     restaurante.imagen,
-                    restaurante.id_encargado
                 ))
                 conexion.commit()
                 for result in cursor.stored_results():
@@ -79,3 +78,25 @@ class RestauranteDAO:
             finally:
                 cursor.close()
                 conexion.close()
+
+    def actualizar_encargado(self, id_restaurante, id_encargado):
+        conexion = obtener_conexion()
+        if conexion:
+            try:
+                cursor = conexion.cursor(dictionary=True)
+                # Ejecuta los UPDATE de la tabla intermedia de manera limpia
+                cursor.callproc('sp_restaurante_actualizar_encargado', (
+                    id_restaurante,
+                    id_encargado
+                ))
+                conexion.commit()
+
+                # Si llegó hasta aquí sin excepciones, la base de datos guardó los cambios con éxito
+                return True
+            except Exception as e:
+                print(f"Error al actualizar encargado de restaurante: {e}")
+                return False
+            finally:
+                cursor.close()
+                conexion.close()
+        return False
