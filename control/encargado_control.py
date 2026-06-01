@@ -32,16 +32,7 @@ def manejar_post(path, body, responder):
         responder(200, resultado)
         return True
 
-    elif path == "/combo":
-        campos = ["id_usuario", "nombre", "descripcion", "numero"]
-        if not all(body.get(c) is not None for c in campos):
-            responder(400, {"exito": False, "mensaje": "Faltan campos requeridos"})
-            return True
-        responder(200, encargado_service.agregar_combo(
-            body["id_usuario"], body["nombre"], body["descripcion"],
-            body["numero"], body.get("imagen")
-        ))
-        return True
+
 
     elif path == "/combo/opcion":
         campos = ["id_combo", "nombre", "tipo"]

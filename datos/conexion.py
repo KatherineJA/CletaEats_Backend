@@ -2,7 +2,7 @@ import mysql.connector
 import os
 from dotenv import load_dotenv
 
-load_dotenv()  # carga el .env
+load_dotenv()  # carga el ..env
 
 def obtener_conexion():
     try:

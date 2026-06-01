@@ -12,6 +12,7 @@ from control import (
     pedido_control,
     calificacion_control,
     reporte_control,
+    combo_control,
 )
 
 
@@ -27,6 +28,8 @@ class Router(BaseHTTPRequestHandler):
     def _leer_body(self):
         try:
             largo = int(self.headers.get("Content-Length", 0))
+            if largo == 0:
+                return {}
             body = self.rfile.read(largo)
             return json.loads(body.decode("utf-8"))
         except Exception:
@@ -43,28 +46,38 @@ class Router(BaseHTTPRequestHandler):
         self.end_headers()
 
     # ------------------------------------------------------------------
-    # POST
+    # POST (Evaluación explícita para evitar cortocircuitos erróneos)
     # ------------------------------------------------------------------
     def do_POST(self):
         try:
             body = self._leer_body()
             path = urlparse(self.path).path
 
-            manejado = (
-                auth_control.manejar_post(path, body, self._responder) or
-                usuario_control.manejar_post(path, body, self._responder) or
-                restaurante_control.manejar_post(path, body, self._responder) or
-                encargado_control.manejar_post(path, body, self._responder) or
-                repartidor_control.manejar_post(path, body, self._responder) or
-                pedido_control.manejar_post(path, body, self._responder) or
-                calificacion_control.manejar_post(path, body, self._responder)
-            )
+            # Lista ordenada de todos los controladores POST disponibles
+            controladores = [
+                combo_control,
+                auth_control,
+                usuario_control,
+                restaurante_control,
+                encargado_control,
+                repartidor_control,
+                pedido_control,
+                calificacion_control
+
+            ]
+
+            manejado = False
+            for controlador in controladores:
+                # Cada controlador debe retornar True únicamente si la ruta coincidió
+                if controlador.manejar_post(path, body, self._responder):
+                    manejado = True
+                    break
 
             if not manejado:
-                self._responder(404, {"exito": False, "mensaje": "Ruta no encontrada"})
+                self._responder(404, {"exito": False, "mensaje": f"Ruta POST '{path}' no encontrada"})
 
         except Exception as e:
-            self._responder(500, {"exito": False, "mensaje": str(e)})
+            self._responder(500, {"exito": False, "mensaje": f"Error interno en Router POST: {str(e)}"})
 
     # ------------------------------------------------------------------
     # GET
@@ -88,20 +101,29 @@ class Router(BaseHTTPRequestHandler):
                     self._responder(404, {"exito": False, "mensaje": "Imagen no encontrada"})
                 return
 
-            manejado = (
-                usuario_control.manejar_get(path, query, self._responder) or
-                restaurante_control.manejar_get(path, query, self._responder) or
-                encargado_control.manejar_get(path, query, self._responder) or
-                repartidor_control.manejar_get(path, query, self._responder) or
-                pedido_control.manejar_get(path, query, self._responder) or
-                reporte_control.manejar_get(path, query, self._responder)
-            )
+            # Lista ordenada de todos los controladores GET disponibles
+            controladores = [
+                combo_control,
+                usuario_control,
+                restaurante_control,
+                encargado_control,
+                repartidor_control,
+                pedido_control,
+                reporte_control
+
+            ]
+
+            manejado = False
+            for controlador in controladores:
+                if controlador.manejar_get(path, query, self._responder):
+                    manejado = True
+                    break
 
             if not manejado:
-                self._responder(404, {"exito": False, "mensaje": "Ruta no encontrada"})
+                self._responder(404, {"exito": False, "mensaje": f"Ruta GET '{path}' no encontrada"})
 
         except Exception as e:
-            self._responder(500, {"exito": False, "mensaje": str(e)})
+            self._responder(500, {"exito": False, "mensaje": f"Error interno en Router GET: {str(e)}"})
 
     def log_message(self, fmt, *args):
         print(f"[{self.address_string()}] {fmt % args}")

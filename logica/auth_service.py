@@ -12,7 +12,7 @@ from dao.usuario_dao import UsuarioDAO
 from dao.cliente_dao import ClienteDAO
 from dao.repartidor_dao import RepartidorDAO
 from dao.recuperacion_dao import RecuperacionDAO
-
+from dao.encargado_dao import EncargadoDAO
 
 class AuthService:
 
@@ -21,6 +21,7 @@ class AuthService:
         self.cliente_dao    = ClienteDAO()
         self.repartidor_dao = RepartidorDAO()
         self.recuperacion_dao = RecuperacionDAO()
+        self.encargado_dao = EncargadoDAO()
 
     def registrar_cliente(self, cedula, nombre, correo, password,
                           telefono, numero_tarjeta="",
@@ -66,7 +67,6 @@ class AuthService:
                 "mensaje": "Repartidor registrado correctamente",
                 "id": usuario_guardado.get_id()}
 
-
     def login(self, correo, password):
         usuario = self.usuario_dao.buscar_por_correo(correo)
         if not usuario:
@@ -78,21 +78,27 @@ class AuthService:
         if usuario.get_rol() == "CLIENTE":
             cliente = self.cliente_dao.buscar_por_id(usuario.get_id())
             if cliente and not cliente.esta_activo():
-                return {"exito": False,
-                        "mensaje": "Tu cuenta esta suspendida. Contacta al administrador."}
+                return {"exito": False, "mensaje": "Tu cuenta esta suspendida. Contacta al administrador."}
 
         if usuario.get_rol() == "REPARTIDOR":
             repartidor = self.repartidor_dao.buscar_por_id(usuario.get_id())
             if repartidor and repartidor.estado == "SUSPENDIDO":
-                return {"exito": False,
-                        "mensaje": "Tu cuenta esta suspendida. Contacta al administrador."}
+                return {"exito": False, "mensaje": "Tu cuenta esta suspendida. Contacta al administrador."}
+
+
+        id_restaurante = None
+        if usuario.get_rol() == "ENCARGADO":
+            encargado = self.encargado_dao.buscar_por_id(usuario.get_id())
+            if encargado:
+                id_restaurante = encargado.get('id_restaurante') or encargado.get('restaurante_id')
 
         return {
-            "exito":  True,
+            "exito": True,
             "mensaje": "Login exitoso",
-            "id":     usuario.get_id(),
+            "id": usuario.get_id(),
             "nombre": usuario.nombre,
-            "rol":    usuario.get_rol()
+            "rol": usuario.get_rol(),
+            "id_restaurante": id_restaurante,
         }
 
     def _generar_codigo(self, longitud=6):
