@@ -3,6 +3,25 @@ from datos.conexion import obtener_conexion
 
 class CalificacionDAO:
 
+    def ya_califico(self, id_pedido, id_evaluador):
+        conexion = obtener_conexion()
+        if conexion:
+            try:
+                cursor = conexion.cursor()
+                cursor.execute(
+                    "SELECT COUNT(*) FROM calificacion WHERE id_pedido = %s AND id_evaluador = %s",
+                    (id_pedido, id_evaluador)
+                )
+                fila = cursor.fetchone()
+                return (fila[0] if fila else 0) > 0
+            except Exception as e:
+                print(f"Error al verificar calificación: {e}")
+                return False
+            finally:
+                cursor.close()
+                conexion.close()
+        return False
+
     def guardar(self, id_pedido, id_evaluador, id_evaluado, rol_evaluador, tipo, opinion=""):
         conexion = obtener_conexion()
         if conexion:
