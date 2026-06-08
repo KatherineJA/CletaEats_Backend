@@ -24,14 +24,7 @@ class PedidoService:
         return R * 2 * math.asin(math.sqrt(a))
 
     def calcular_porcentaje_envio(self, distancia_km):
-        if distancia_km <= 3:
-            return 0.10
-        elif distancia_km <= 6:
-            return 0.20
-        elif distancia_km <= 10:
-            return 0.30
-        else:
-            return 0.50
+        return 0.10
 
     def crear_pedido(self, id_cliente, id_restaurante,
                      lat_restaurante, lon_restaurante,
