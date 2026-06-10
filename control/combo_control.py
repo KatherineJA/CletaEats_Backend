@@ -96,10 +96,77 @@ def manejar_post(path, body, responder):
         responder(200, resultado)
         return True
 
+    if path == "/combo/opcion":
+        campos = ["id_combo", "nombre", "tipo"]
+        if not all(body.get(c) is not None for c in campos):
+            responder(400, {"exito": False, "mensaje": "Faltan campos requeridos: id_combo, nombre, tipo"})
+            return True
+
+        responder(200, combo_service.agregar_opcion_combo(
+            body["id_combo"], body["nombre"], body["tipo"]
+        ))
+        return True
+
+    if path == "/combo/opcion/actualizar":
+        campos = ["id_opcion", "nombre", "tipo"]
+        if not all(body.get(c) is not None for c in campos):
+            responder(400, {"exito": False, "mensaje": "Faltan campos requeridos: id_opcion, nombre, tipo"})
+            return True
+
+        responder(200, combo_service.actualizar_opcion_combo(
+            body["id_opcion"], body["nombre"], body["tipo"]
+        ))
+        return True
+
+    if path == "/combo/opcion/eliminar":
+        if body.get("id_opcion") is None:
+            responder(400, {"exito": False, "mensaje": "id_opcion es requerido para eliminar"})
+            return True
+
+        responder(200, combo_service.eliminar_opcion_combo(body["id_opcion"]))
+        return True
+
+    if path == "/combo/opcion/valor":
+        campos = ["id_opcion", "descripcion"]
+        if not all(body.get(c) is not None for c in campos):
+            responder(400, {"exito": False, "mensaje": "Faltan campos requeridos: id_opcion, descripcion"})
+            return True
+
+        responder(200, combo_service.agregar_valor_opcion(
+            body["id_opcion"], body["descripcion"], body.get("costo_adicional", 0)
+        ))
+        return True
+
+    if path == "/combo/opcion/valor/actualizar":
+        campos = ["id_valor", "descripcion"]
+        if not all(body.get(c) is not None for c in campos):
+            responder(400, {"exito": False, "mensaje": "Faltan campos requeridos: id_valor, descripcion"})
+            return True
+
+        responder(200, combo_service.actualizar_valor_opcion(
+            body["id_valor"], body["descripcion"], body.get("costo_adicional", 0)
+        ))
+        return True
+
+    if path == "/combo/opcion/valor/eliminar":
+        if body.get("id_valor") is None:
+            responder(400, {"exito": False, "mensaje": "id_valor es requerido para eliminar"})
+            return True
+
+        responder(200, combo_service.eliminar_valor_opcion(body["id_valor"]))
+        return True
+
     return False
 
 
 def manejar_get(path, query, responder):
+    def obtener_id(*nombres):
+        for nombre in nombres:
+            valor = query.get(nombre, [None])[0]
+            if valor not in (None, ""):
+                return valor
+        return None
+
     if path == "/combos":
         id_restaurante = query.get("id_restaurante", [None])[0]
         if not id_restaurante:
@@ -110,12 +177,30 @@ def manejar_get(path, query, responder):
         return True
 
     if path == "/combo/detalle":
-        id_combo = query.get("id", [None])[0]
+        id_combo = obtener_id("id", "id_combo")
         if not id_combo:
             responder(400, {"exito": False, "mensaje": "id del combo es requerido"})
             return True
 
         responder(200, combo_service.detalle_combo(id_combo))
+        return True
+
+    if path == "/combo/opciones":
+        id_combo = obtener_id("id", "id_combo")
+        if not id_combo:
+            responder(400, {"exito": False, "mensaje": "id del combo es requerido"})
+            return True
+
+        responder(200, combo_service.listar_opciones(id_combo))
+        return True
+
+    if path == "/combo/opcion/valores":
+        id_opcion = obtener_id("id", "id_opcion")
+        if not id_opcion:
+            responder(400, {"exito": False, "mensaje": "id de la opción es requerido"})
+            return True
+
+        responder(200, combo_service.listar_valores_opcion(id_opcion))
         return True
 
     return False
