@@ -5,6 +5,80 @@ import uuid
 
 combo_service = ComboService()
 
+CARPETA_IMAGENES_COMBOS = os.path.join("uploads", "combos")
+TIPOS_IMAGEN_PERMITIDOS = {
+    "jpeg": "jpg",
+    "png": "png",
+    "gif": "gif",
+    "webp": "webp",
+}
+
+
+def _detectar_tipo_imagen(data):
+    if len(data) >= 3 and data[:3] == b"\xff\xd8\xff":
+        return "jpeg"
+    if len(data) >= 8 and data[:8] == b"\x89PNG\r\n\x1a\n":
+        return "png"
+    if len(data) >= 6 and data[:6] in (b"GIF87a", b"GIF89a"):
+        return "gif"
+    if len(data) >= 12 and data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "webp"
+    return None
+
+
+def _guardar_archivo_imagen(imagen):
+    if not isinstance(imagen, dict):
+        return None, "El campo imagen no tiene un formato de archivo válido"
+
+    data = imagen.get("data")
+    if not isinstance(data, (bytes, bytearray)) or not data:
+        return None, "El archivo imagen está vacío"
+
+    tipo_detectado = _detectar_tipo_imagen(data)
+    if tipo_detectado not in TIPOS_IMAGEN_PERMITIDOS:
+        return None, "El archivo enviado no es una imagen válida (jpg, png, gif o webp)"
+
+    os.makedirs(CARPETA_IMAGENES_COMBOS, exist_ok=True)
+    extension = TIPOS_IMAGEN_PERMITIDOS[tipo_detectado]
+    nombre_archivo = f"combo_{uuid.uuid4().hex}.{extension}"
+    ruta_archivo = os.path.join(CARPETA_IMAGENES_COMBOS, nombre_archivo)
+
+    with open(ruta_archivo, "wb") as archivo:
+        archivo.write(data)
+
+    return f"/{CARPETA_IMAGENES_COMBOS.replace(os.sep, '/')}/{nombre_archivo}", None
+
+
+def _extraer_imagen(body):
+    imagen = body.get("imagen")
+    if imagen in (None, ""):
+        return None, None
+
+    if isinstance(imagen, str):
+        return imagen.strip(), None
+
+    return _guardar_archivo_imagen(imagen)
+
+
+def _parsear_opciones_predefinidas(raw):
+    if raw in (None, ""):
+        return None, None
+
+    if isinstance(raw, list):
+        return raw, None
+
+    if isinstance(raw, str):
+        try:
+            opciones = json.loads(raw)
+        except json.JSONDecodeError:
+            return None, "opciones_predefinidas debe venir como JSON válido"
+
+        if not isinstance(opciones, list):
+            return None, "opciones_predefinidas debe ser un arreglo JSON"
+        return opciones, None
+
+    return None, "Formato inválido para opciones_predefinidas"
+
 
 def manejar_post(path, body, responder):
     # Asegurar que el cuerpo no sea None
