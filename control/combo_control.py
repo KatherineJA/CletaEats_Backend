@@ -1,4 +1,7 @@
 from logica.combo_service import ComboService
+import json
+import os
+import uuid
 
 combo_service = ComboService()
 
@@ -48,6 +51,16 @@ def manejar_post(path, body, responder):
             })
             return True
 
+        imagen_url, error_imagen = _extraer_imagen(body)
+        if error_imagen:
+            responder(400, {"exito": False, "mensaje": error_imagen})
+            return True
+
+        opciones_predefinidas, error_opciones = _parsear_opciones_predefinidas(body.get("opciones_predefinidas"))
+        if error_opciones:
+            responder(400, {"exito": False, "mensaje": error_opciones})
+            return True
+
         # 4. Enviar al Servicio
         try:
             resultado = combo_service.guardar_combo(
@@ -56,7 +69,8 @@ def manejar_post(path, body, responder):
                 descripcion=str(body.get("descripcion", "")).strip(),
                 numero=numero,
                 precio=precio,
-                imagen=body.get("imagen", None)
+                imagen=imagen_url,
+                opciones_predefinidas=opciones_predefinidas,
             )
 
             if not resultado or not resultado.get("exito"):
@@ -75,13 +89,18 @@ def manejar_post(path, body, responder):
             responder(400, {"exito": False, "mensaje": "Faltan campos requeridos en actualización: id_combo, nombre, numero, precio"})
             return True
 
+        imagen_url, error_imagen = _extraer_imagen(body)
+        if error_imagen:
+            responder(400, {"exito": False, "mensaje": error_imagen})
+            return True
+
         resultado = combo_service.actualizar_combo(
             id_combo=body["id_combo"],
             nombre=body["nombre"],
             descripcion=body.get("descripcion", ""),
             numero=body["numero"],
             precio=body["precio"],
-            imagen=body.get("imagen", None)
+            imagen=imagen_url,
         )
         responder(200, resultado)
         return True
