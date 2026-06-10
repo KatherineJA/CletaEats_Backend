@@ -38,6 +38,27 @@ def _guardar_archivo_imagen(imagen):
     if tipo_detectado not in TIPOS_IMAGEN_PERMITIDOS:
         return None, "El archivo enviado no es una imagen válida (jpg, png, gif o webp)"
 
+    # Si está configurado para usar ImgBB (u otro servicio vía env), subir ahí y devolver URL
+    usar_imgbb = os.environ.get("USAR_IMGBB", "false").lower() == "true"
+    if usar_imgbb:
+        try:
+            import base64
+            import requests
+            IMGBB_API_KEY = os.environ.get("IMGBB_API_KEY", "")
+            foto_b64 = base64.b64encode(data).decode("utf-8")
+            response = requests.post(
+                "https://api.imgbb.com/1/upload",
+                data={"key": IMGBB_API_KEY, "image": foto_b64}
+            )
+            resultado = response.json()
+            if resultado.get("success"):
+                url = resultado["data"]["url"]
+                return url, None
+            return None, "Error al subir imagen a ImgBB"
+        except Exception as e:
+            return None, f"Error al subir imagen a ImgBB: {str(e)}"
+
+    # Fallback: guardar en disco y devolver ruta relativa
     os.makedirs(CARPETA_IMAGENES_COMBOS, exist_ok=True)
     extension = TIPOS_IMAGEN_PERMITIDOS[tipo_detectado]
     nombre_archivo = f"combo_{uuid.uuid4().hex}.{extension}"
