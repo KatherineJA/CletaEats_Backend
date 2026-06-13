@@ -1,6 +1,10 @@
 from http.server import HTTPServer
 from control.router import Router
 import os
+import sys
+
+sys.stdout.reconfigure(line_buffering=True)
+os.environ['PYTHONUNBUFFERED'] = '1'
 
 PORT = int(os.environ.get("PORT", 5000))
 
