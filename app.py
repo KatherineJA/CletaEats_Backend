@@ -2,7 +2,7 @@ from http.server import HTTPServer
 from control.router import Router
 import os
 
-PORT = int(os.environ.get("PORT", 5000))  # Railway inyecta PORT automáticamente
+PORT = int(os.environ.get("PORT", 5000))
 
 if __name__ == "__main__":
     try:

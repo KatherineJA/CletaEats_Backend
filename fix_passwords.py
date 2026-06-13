@@ -1,14 +1,14 @@
 import bcrypt
-import mysql.connector
+import psycopg2
 import os
 
 
-conexion = mysql.connector.connect(
-    host=os.environ.get("MYSQLHOST"),
-    user=os.environ.get("MYSQLUSER"),
-    password=os.environ.get("MYSQLPASSWORD"),
-    database=os.environ.get("MYSQL_DATABASE"),
-    port=int(os.environ.get("MYSQLPORT", 3306))
+conexion = psycopg2.connect(
+    host=os.environ.get("DB_HOST"),
+    user=os.environ.get("DB_USER"),
+    password=os.environ.get("DB_PASSWORD"),
+    dbname=os.environ.get("DB_NAME"),
+    port=int(os.environ.get("DB_PORT", 5432))
 )
 
 password = "password123"
