@@ -26,6 +26,7 @@ class AuthService:
     def registrar_cliente(self, cedula, nombre, correo, password,
                           telefono, numero_tarjeta="",
                           latitud=None, longitud=None):
+        print("VERSION LOCAL NUEVA")
         if self.usuario_dao.buscar_por_correo(correo):
             return {"exito": False, "mensaje": "El correo ya esta registrado"}
         if self.usuario_dao.buscar_por_cedula(cedula):
