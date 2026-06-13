@@ -6,24 +6,45 @@ class UsuarioDAO:
 
     def guardar(self, usuario):
         conexion = obtener_conexion()
+
+        print("Conexion:", conexion)
+
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.execute("SELECT sp_usuario_guardar(%s,%s,%s,%s,%s,%s,%s,%s)", (
-                    usuario.cedula, usuario.nombre, usuario.correo, usuario.contrasena,
-                    usuario.telefono, usuario.rol, usuario.latitud, usuario.longitud
-                ))
+
+                print("Intentando guardar usuario:", usuario.correo)
+
+                cursor.execute(
+                    "SELECT sp_usuario_guardar(%s,%s,%s,%s,%s,%s,%s,%s)",
+                    (
+                        usuario.cedula,
+                        usuario.nombre,
+                        usuario.correo,
+                        usuario.contrasena,
+                        usuario.telefono,
+                        usuario.rol,
+                        usuario.latitud,
+                        usuario.longitud
+                    )
+                )
+
+                print("SP ejecutado correctamente")
+
                 fila = cursor.fetchone()
+                print("Fila retornada:", fila)
+
                 if fila:
                     usuario.set_id(fila[0])
+
                 conexion.commit()
                 return usuario
+
             except Exception as e:
-                print(f"Error al guardar usuario: {e}")
+                print("ERROR COMPLETO:")
+                print(type(e))
+                print(e)
                 return None
-            finally:
-                cursor.close()
-                conexion.close()
 
     def buscar_por_correo(self, correo):
         conexion = obtener_conexion()
