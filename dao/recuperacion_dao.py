@@ -1,5 +1,5 @@
 from datos.conexion import obtener_conexion
-
+import psycopg2.extras
 
 class RecuperacionDAO:
 
@@ -9,7 +9,7 @@ class RecuperacionDAO:
             return False
         try:
             cursor = conexion.cursor()
-            cursor.callproc('sp_recuperacion_guardar', (id_usuario, codigo, expira))
+            cursor.execute("SELECT sp_recuperacion_guardar(%s,%s,%s)", (id_usuario, codigo, expira))
             conexion.commit()
             return True
         except Exception as e:
@@ -24,11 +24,9 @@ class RecuperacionDAO:
         if not conexion:
             return None
         try:
-            cursor = conexion.cursor(dictionary=True)
-            cursor.callproc('sp_recuperacion_buscar_por_usuario', (id_usuario,))
-            for result in cursor.stored_results():
-                return result.fetchone()
-            return None
+            cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cursor.execute("SELECT * FROM sp_recuperacion_buscar_por_usuario(%s)", (id_usuario,))
+            return cursor.fetchone()
         except Exception as e:
             print(f"[RecuperacionDAO] Error al buscar: {e}")
             return None
@@ -42,7 +40,7 @@ class RecuperacionDAO:
             return False
         try:
             cursor = conexion.cursor()
-            cursor.callproc('sp_recuperacion_marcar_verificado', (id_usuario,))
+            cursor.execute("SELECT sp_recuperacion_marcar_verificado(%s)", (id_usuario,))
             conexion.commit()
             return True
         except Exception as e:
@@ -58,7 +56,7 @@ class RecuperacionDAO:
             return False
         try:
             cursor = conexion.cursor()
-            cursor.callproc('sp_recuperacion_eliminar', (id_usuario,))
+            cursor.execute("SELECT sp_recuperacion_eliminar(%s)", (id_usuario,))
             conexion.commit()
             return True
         except Exception as e:

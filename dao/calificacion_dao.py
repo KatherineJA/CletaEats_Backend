@@ -1,5 +1,5 @@
 from datos.conexion import obtener_conexion
-
+import psycopg2.extras
 
 class CalificacionDAO:
 
@@ -27,12 +27,12 @@ class CalificacionDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.callproc('sp_calificacion_guardar',
-                                (id_pedido, id_evaluador, id_evaluado, rol_evaluador, tipo, opinion))
+                cursor.execute("SELECT sp_calificacion_guardar(%s,%s,%s,%s,%s,%s)",
+                               (id_pedido, id_evaluador, id_evaluado, rol_evaluador, tipo, opinion))
                 conexion.commit()
                 return True
             except Exception as e:
-                if "Duplicate entry" in str(e):
+                if "unique" in str(e).lower():
                     raise ValueError("Ya existe una calificación de este evaluador para este pedido")
                 print(f"Error al guardar calificación: {e}")
                 return False
@@ -59,11 +59,9 @@ class CalificacionDAO:
         conexion = obtener_conexion()
         if conexion:
             try:
-                cursor = conexion.cursor(dictionary=True)
-                cursor.callproc('sp_calificacion_listar_por_pedido', (id_pedido,))
-                for result in cursor.stored_results():
-                    return result.fetchall()
-                return []
+                cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                cursor.execute("SELECT * FROM sp_calificacion_listar_por_pedido(%s)", (id_pedido,))
+                return cursor.fetchall()
             except Exception as e:
                 print(f"Error al listar calificaciones: {e}")
                 return []
@@ -75,11 +73,9 @@ class CalificacionDAO:
         conexion = obtener_conexion()
         if conexion:
             try:
-                cursor = conexion.cursor(dictionary=True)
-                cursor.callproc('sp_calificacion_reporte_malos_repartidor')
-                for result in cursor.stored_results():
-                    return result.fetchall()
-                return []
+                cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                cursor.execute("SELECT * FROM sp_reporte_malos_por_repartidor()")
+                return cursor.fetchall()
             except Exception as e:
                 print(f"Error en reporte M: {e}")
                 return []

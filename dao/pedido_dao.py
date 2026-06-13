@@ -1,5 +1,5 @@
 from datos.conexion import obtener_conexion
-
+import psycopg2.extras
 
 class PedidoDAO:
 
@@ -7,16 +7,14 @@ class PedidoDAO:
         conexion = obtener_conexion()
         if conexion:
             try:
-                cursor = conexion.cursor(dictionary=True)
-                cursor.callproc('sp_pedido_guardar', (
-                    id_cliente, id_restaurante,
-                    lat_destino, lon_destino,
+                cursor = conexion.cursor()
+                cursor.execute("SELECT sp_pedido_guardar(%s,%s,%s,%s,%s,%s)", (
+                    id_cliente, id_restaurante, lat_destino, lon_destino,
                     round(distancia_km, 4), costo_envio
                 ))
+                fila = cursor.fetchone()
                 conexion.commit()
-                for result in cursor.stored_results():
-                    fila = result.fetchone()
-                    return fila['id'] if fila else None
+                return fila[0] if fila else None
             except Exception as e:
                 print(f"Error al guardar pedido: {e}")
                 return None
@@ -28,12 +26,11 @@ class PedidoDAO:
         conexion = obtener_conexion()
         if conexion:
             try:
-                cursor = conexion.cursor(dictionary=True)
-                cursor.callproc('sp_pedido_guardar_detalle', (id_pedido, id_combo, cantidad))
+                cursor = conexion.cursor()
+                cursor.execute("SELECT sp_pedido_guardar_detalle(%s,%s,%s)", (id_pedido, id_combo, cantidad))
+                fila = cursor.fetchone()
                 conexion.commit()
-                for result in cursor.stored_results():
-                    fila = result.fetchone()
-                    return fila['id'] if fila else None
+                return fila[0] if fila else None
             except Exception as e:
                 print(f"Error al guardar detalle: {e}")
                 return None
@@ -46,7 +43,7 @@ class PedidoDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.callproc('sp_pedido_guardar_preferencia', (id_detalle_pedido, id_valor_opcion))
+                cursor.execute("SELECT sp_pedido_guardar_preferencia(%s,%s)", (id_detalle_pedido, id_valor_opcion))
                 conexion.commit()
                 return True
             except Exception as e:
@@ -61,8 +58,7 @@ class PedidoDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.callproc('sp_pedido_actualizar_estado_completo',
-                                (id_pedido, nuevo_estado, id_repartidor))
+                cursor.execute("SELECT sp_pedido_actualizar_estado_completo(%s,%s,%s)", (id_pedido, nuevo_estado, id_repartidor))
                 conexion.commit()
                 return True
             except Exception as e:
@@ -76,11 +72,9 @@ class PedidoDAO:
         conexion = obtener_conexion()
         if conexion:
             try:
-                cursor = conexion.cursor(dictionary=True)
-                cursor.callproc('sp_pedido_buscar_por_id', (id_pedido,))
-                for result in cursor.stored_results():
-                    return result.fetchone()
-                return None
+                cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                cursor.execute("SELECT * FROM sp_pedido_buscar_por_id(%s)", (id_pedido,))
+                return cursor.fetchone()
             except Exception as e:
                 print(f"Error al buscar pedido: {e}")
                 return None
@@ -92,11 +86,9 @@ class PedidoDAO:
         conexion = obtener_conexion()
         if conexion:
             try:
-                cursor = conexion.cursor(dictionary=True)
-                cursor.callproc('sp_pedido_listar_por_cliente_activos', (id_cliente,))
-                for result in cursor.stored_results():
-                    return result.fetchall()
-                return []
+                cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                cursor.execute("SELECT * FROM sp_pedido_listar_por_cliente_activos(%s)", (id_cliente,))
+                return cursor.fetchall()
             except Exception as e:
                 print(f"Error al listar pedidos por cliente: {e}")
                 return []
@@ -108,11 +100,9 @@ class PedidoDAO:
         conexion = obtener_conexion()
         if conexion:
             try:
-                cursor = conexion.cursor(dictionary=True)
-                cursor.callproc('sp_pedido_listar_disponibles')
-                for result in cursor.stored_results():
-                    return result.fetchall()
-                return []
+                cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                cursor.execute("SELECT * FROM sp_pedido_listar_disponibles()")
+                return cursor.fetchall()
             except Exception as e:
                 print(f"Error al listar pedidos disponibles: {e}")
                 return []
@@ -124,11 +114,9 @@ class PedidoDAO:
         conexion = obtener_conexion()
         if conexion:
             try:
-                cursor = conexion.cursor(dictionary=True)
-                cursor.callproc('sp_pedido_listar_por_repartidor_activos', (id_repartidor,))
-                for result in cursor.stored_results():
-                    return result.fetchall()
-                return []
+                cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                cursor.execute("SELECT * FROM sp_pedido_listar_por_repartidor_activos(%s)", (id_repartidor,))
+                return cursor.fetchall()
             except Exception as e:
                 print(f"Error al listar pedidos por repartidor: {e}")
                 return []
@@ -140,19 +128,15 @@ class PedidoDAO:
         conexion = obtener_conexion()
         if conexion:
             try:
-                cursor = conexion.cursor(dictionary=True)
-                cursor.callproc('sp_pedido_listar_detalles_con_preferencias', (id_pedido,))
-                detalles = []
-                for result in cursor.stored_results():
-                    detalles = result.fetchall()
-
+                cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                cursor.execute("SELECT * FROM sp_pedido_listar_detalles_con_preferencias(%s)", (id_pedido,))
+                detalles = cursor.fetchall()
+                detalles = [dict(d) for d in detalles]
                 for detalle in detalles:
-                    cursor2 = conexion.cursor(dictionary=True)
-                    cursor2.callproc('sp_pedido_preferencias_por_detalle', (detalle['id'],))
-                    for r in cursor2.stored_results():
-                        detalle['preferencias'] = r.fetchall()
+                    cursor2 = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                    cursor2.execute("SELECT * FROM sp_pedido_preferencias_por_detalle(%s)", (detalle['id'],))
+                    detalle['preferencias'] = cursor2.fetchall()
                     cursor2.close()
-
                 return detalles
             except Exception as e:
                 print(f"Error al listar detalles: {e}")

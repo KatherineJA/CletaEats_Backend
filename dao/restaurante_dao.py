@@ -1,5 +1,6 @@
 from datos.conexion import obtener_conexion
 from modelo.restaurante import Restaurante
+import psycopg2.extras
 
 
 class RestauranteDAO:
@@ -8,25 +9,37 @@ class RestauranteDAO:
         conexion = obtener_conexion()
         if conexion:
             try:
-                cursor = conexion.cursor(dictionary=True)
-                cursor.callproc('sp_restaurante_guardar', (
-                    restaurante.nombre,
-                    restaurante.cedula_juridica,
-                    restaurante.direccion,
-                    restaurante.tipo_comida,
-                    restaurante.latitud,
-                    restaurante.longitud,
-                    restaurante.imagen,
-                ))
+                cursor = conexion.cursor()
+
+                cursor.execute(
+                    """
+                    SELECT sp_restaurante_guardar(
+                        %s,%s,%s,%s,%s,%s,%s
+                    )
+                    """,
+                    (
+                        restaurante.nombre,
+                        restaurante.cedula_juridica,
+                        restaurante.direccion,
+                        restaurante.tipo_comida,
+                        restaurante.latitud,
+                        restaurante.longitud,
+                        restaurante.imagen
+                    )
+                )
+
+                fila = cursor.fetchone()
+
+                if fila:
+                    restaurante.set_id(fila[0])
+
                 conexion.commit()
-                for result in cursor.stored_results():
-                    fila = result.fetchone()
-                    if fila:
-                        restaurante.set_id(fila['id'])
                 return restaurante
+
             except Exception as e:
                 print(f"Error al guardar restaurante: {e}")
                 return None
+
             finally:
                 cursor.close()
                 conexion.close()
@@ -35,14 +48,20 @@ class RestauranteDAO:
         conexion = obtener_conexion()
         if conexion:
             try:
-                cursor = conexion.cursor(dictionary=True)
-                cursor.callproc('sp_restaurante_listar_todos')
-                for result in cursor.stored_results():
-                    return result.fetchall()
-                return []
+                cursor = conexion.cursor(
+                    cursor_factory=psycopg2.extras.RealDictCursor
+                )
+
+                cursor.execute(
+                    "SELECT * FROM sp_restaurante_listar_todos()"
+                )
+
+                return cursor.fetchall()
+
             except Exception as e:
                 print(f"Error al listar restaurantes: {e}")
                 return []
+
             finally:
                 cursor.close()
                 conexion.close()
@@ -52,13 +71,21 @@ class RestauranteDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.callproc('sp_restaurante_buscar_por_cedula_juridica', (cedula_juridica,))
-                for result in cursor.stored_results():
-                    return result.fetchone() is not None
-                return False
+
+                cursor.execute(
+                    """
+                    SELECT *
+                    FROM sp_restaurante_buscar_por_cedula_juridica(%s)
+                    """,
+                    (cedula_juridica,)
+                )
+
+                return cursor.fetchone() is not None
+
             except Exception as e:
                 print(f"Error al buscar restaurante: {e}")
                 return False
+
             finally:
                 cursor.close()
                 conexion.close()
@@ -67,14 +94,24 @@ class RestauranteDAO:
         conexion = obtener_conexion()
         if conexion:
             try:
-                cursor = conexion.cursor(dictionary=True)
-                cursor.callproc('sp_restaurante_buscar_por_id', (id_restaurante,))
-                for result in cursor.stored_results():
-                    return result.fetchone()
-                return None
+                cursor = conexion.cursor(
+                    cursor_factory=psycopg2.extras.RealDictCursor
+                )
+
+                cursor.execute(
+                    """
+                    SELECT *
+                    FROM sp_restaurante_buscar_por_id(%s)
+                    """,
+                    (id_restaurante,)
+                )
+
+                return cursor.fetchone()
+
             except Exception as e:
                 print(f"Error al buscar restaurante por id: {e}")
                 return None
+
             finally:
                 cursor.close()
                 conexion.close()
@@ -83,20 +120,29 @@ class RestauranteDAO:
         conexion = obtener_conexion()
         if conexion:
             try:
-                cursor = conexion.cursor(dictionary=True)
-                # Ejecuta los UPDATE de la tabla intermedia de manera limpia
-                cursor.callproc('sp_restaurante_actualizar_encargado', (
-                    id_restaurante,
-                    id_encargado
-                ))
-                conexion.commit()
+                cursor = conexion.cursor()
 
-                # Si llegó hasta aquí sin excepciones, la base de datos guardó los cambios con éxito
+                cursor.execute(
+                    """
+                    SELECT sp_restaurante_actualizar_encargado(
+                        %s,%s
+                    )
+                    """,
+                    (
+                        id_restaurante,
+                        id_encargado
+                    )
+                )
+
+                conexion.commit()
                 return True
+
             except Exception as e:
-                print(f"Error al actualizar encargado de restaurante: {e}")
+                print(f"Error al actualizar encargado: {e}")
                 return False
+
             finally:
                 cursor.close()
                 conexion.close()
+
         return False

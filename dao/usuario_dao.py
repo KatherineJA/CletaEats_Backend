@@ -1,6 +1,6 @@
 from datos.conexion import obtener_conexion
 from modelo.usuario import Usuario
-
+import psycopg2.extras
 
 class UsuarioDAO:
 
@@ -8,16 +8,15 @@ class UsuarioDAO:
         conexion = obtener_conexion()
         if conexion:
             try:
-                cursor = conexion.cursor(dictionary=True)
-                cursor.callproc('sp_usuario_guardar', (
+                cursor = conexion.cursor()
+                cursor.execute("SELECT sp_usuario_guardar(%s,%s,%s,%s,%s,%s,%s,%s)", (
                     usuario.cedula, usuario.nombre, usuario.correo, usuario.contrasena,
                     usuario.telefono, usuario.rol, usuario.latitud, usuario.longitud
                 ))
+                fila = cursor.fetchone()
+                if fila:
+                    usuario.set_id(fila[0])
                 conexion.commit()
-                for result in cursor.stored_results():
-                    fila = result.fetchone()
-                    if fila:
-                        usuario.set_id(fila['id'])
                 return usuario
             except Exception as e:
                 print(f"Error al guardar usuario: {e}")
@@ -31,14 +30,13 @@ class UsuarioDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.callproc('sp_usuario_buscar_por_correo', (correo,))
-                for result in cursor.stored_results():
-                    fila = result.fetchone()
-                    if fila:
-                        u = Usuario()
-                        u.id, u.cedula, u.nombre, u.correo, u.contrasena, \
-                        u.telefono, u.rol, u.latitud, u.longitud, u.foto_perfil = fila
-                        return u
+                cursor.execute("SELECT * FROM sp_usuario_buscar_por_correo(%s)", (correo,))
+                fila = cursor.fetchone()
+                if fila:
+                    u = Usuario()
+                    u.id, u.cedula, u.nombre, u.correo, u.contrasena, \
+                    u.telefono, u.rol, u.latitud, u.longitud, u.foto_perfil = fila
+                    return u
                 return None
             except Exception as e:
                 print(f"Error al buscar usuario por correo: {e}")
@@ -52,14 +50,13 @@ class UsuarioDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.callproc('sp_usuario_buscar_por_telefono', (telefono,))
-                for result in cursor.stored_results():
-                    fila = result.fetchone()
-                    if fila:
-                        u = Usuario()
-                        u.id, u.cedula, u.nombre, u.correo, u.contrasena, \
-                        u.telefono, u.rol, u.latitud, u.longitud, u.foto_perfil = fila
-                        return u
+                cursor.execute("SELECT * FROM sp_usuario_buscar_por_telefono(%s)", (telefono,))
+                fila = cursor.fetchone()
+                if fila:
+                    u = Usuario()
+                    u.id, u.cedula, u.nombre, u.correo, u.contrasena, \
+                    u.telefono, u.rol, u.latitud, u.longitud, u.foto_perfil = fila
+                    return u
                 return None
             except Exception as e:
                 print(f"Error al buscar usuario por telefono: {e}")
@@ -73,10 +70,8 @@ class UsuarioDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.callproc('sp_usuario_buscar_por_cedula', (cedula,))
-                for result in cursor.stored_results():
-                    return result.fetchone() is not None
-                return False
+                cursor.execute("SELECT * FROM sp_usuario_buscar_por_cedula(%s)", (cedula,))
+                return cursor.fetchone() is not None
             except Exception as e:
                 print(f"Error al buscar por cedula: {e}")
                 return False
@@ -89,14 +84,13 @@ class UsuarioDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.callproc('sp_usuario_buscar_por_id', (id_usuario,))
-                for result in cursor.stored_results():
-                    fila = result.fetchone()
-                    if fila:
-                        u = Usuario()
-                        u.id, u.cedula, u.nombre, u.correo, u.contrasena, \
-                        u.telefono, u.rol, u.latitud, u.longitud, u.foto_perfil = fila
-                        return u
+                cursor.execute("SELECT * FROM sp_usuario_buscar_por_id(%s)", (id_usuario,))
+                fila = cursor.fetchone()
+                if fila:
+                    u = Usuario()
+                    u.id, u.cedula, u.nombre, u.correo, u.contrasena, \
+                    u.telefono, u.rol, u.latitud, u.longitud, u.foto_perfil = fila
+                    return u
                 return None
             except Exception as e:
                 print(f"Error al buscar usuario por id: {e}")
@@ -110,7 +104,7 @@ class UsuarioDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.callproc('sp_usuario_actualizar_perfil', (id_usuario, telefono, latitud, longitud))
+                cursor.execute("SELECT sp_usuario_actualizar_perfil(%s,%s,%s,%s)", (id_usuario, telefono, latitud, longitud))
                 conexion.commit()
                 return True
             except Exception as e:
@@ -125,7 +119,7 @@ class UsuarioDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.callproc('sp_usuario_actualizar_foto', (id_usuario, url_foto))
+                cursor.execute("SELECT sp_usuario_actualizar_foto(%s,%s)", (id_usuario, url_foto))
                 conexion.commit()
                 return True
             except Exception as e:
@@ -140,7 +134,7 @@ class UsuarioDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.callproc('sp_usuario_actualizar_nombre', (id_usuario, nombre))
+                cursor.execute("SELECT sp_usuario_actualizar_nombre(%s,%s)", (id_usuario, nombre))
                 conexion.commit()
                 return True
             except Exception as e:
@@ -155,7 +149,7 @@ class UsuarioDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.callproc('sp_usuario_actualizar_contrasena', (id_usuario, contrasena_hash))
+                cursor.execute("SELECT sp_usuario_actualizar_contrasena(%s,%s)", (id_usuario, contrasena_hash))
                 conexion.commit()
                 return True
             except Exception as e:
@@ -170,7 +164,7 @@ class UsuarioDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.callproc('sp_usuario_actualizar_tarjeta_cliente', (id_usuario, numero_tarjeta))
+                cursor.execute("SELECT sp_usuario_actualizar_tarjeta_cliente(%s,%s)", (id_usuario, numero_tarjeta))
                 conexion.commit()
                 return True
             except Exception as e:
@@ -185,7 +179,7 @@ class UsuarioDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.callproc('sp_usuario_actualizar_tarjeta_repartidor', (id_usuario, numero_tarjeta))
+                cursor.execute("SELECT sp_usuario_actualizar_tarjeta_repartidor(%s,%s)", (id_usuario, numero_tarjeta))
                 conexion.commit()
                 return True
             except Exception as e:
@@ -199,11 +193,9 @@ class UsuarioDAO:
         conexion = obtener_conexion()
         if conexion:
             try:
-                cursor = conexion.cursor(dictionary=True)
-                cursor.callproc('sp_usuario_listar_por_rol_y_estado', (rol, estado))
-                for result in cursor.stored_results():
-                    return result.fetchall()
-                return []
+                cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                cursor.execute("SELECT * FROM sp_usuario_listar_por_rol_y_estado(%s,%s)", (rol, estado))
+                return cursor.fetchall()
             except Exception as e:
                 print(f"Error al listar por rol y estado: {e}")
                 return []
@@ -216,7 +208,7 @@ class UsuarioDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.callproc('sp_usuario_cambiar_estado_cliente', (id_usuario, nuevo_estado))
+                cursor.execute("SELECT sp_usuario_cambiar_estado_cliente(%s,%s)", (id_usuario, nuevo_estado))
                 conexion.commit()
                 return True
             except Exception as e:

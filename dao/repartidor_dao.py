@@ -1,6 +1,6 @@
 from datos.conexion import obtener_conexion
 from modelo.repartidor import Repartidor
-
+import psycopg2.extras
 
 class RepartidorDAO:
 
@@ -9,11 +9,9 @@ class RepartidorDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.callproc('sp_repartidor_guardar', (
-                    repartidor.id_usuario,
-                    repartidor.numero_tarjeta,
-                    repartidor.estado,
-                    repartidor.kilometros_diarios
+                cursor.execute("SELECT sp_repartidor_guardar(%s,%s,%s,%s)", (
+                    repartidor.id_usuario, repartidor.numero_tarjeta,
+                    repartidor.estado, repartidor.kilometros_diarios
                 ))
                 conexion.commit()
                 return repartidor
@@ -29,14 +27,13 @@ class RepartidorDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.callproc('sp_repartidor_buscar_por_id', (id_usuario,))
-                for result in cursor.stored_results():
-                    fila = result.fetchone()
-                    if fila:
-                        r = Repartidor()
-                        r.id_usuario, r.numero_tarjeta, r.estado, r.kilometros_diarios, \
-                        _, _, _ = fila  # nombre, latitud, longitud los ignora (son de Usuario)
-                        return r
+                cursor.execute("SELECT * FROM sp_repartidor_buscar_por_id(%s)", (id_usuario,))
+                fila = cursor.fetchone()
+                if fila:
+                    r = Repartidor()
+                    r.id_usuario, r.numero_tarjeta, r.estado, r.kilometros_diarios, \
+                    _, _, _ = fila
+                    return r
                 return None
             except Exception as e:
                 print(f"Error al buscar repartidor: {e}")
@@ -50,7 +47,7 @@ class RepartidorDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.callproc('sp_repartidor_actualizar_estado', (id_usuario, estado))
+                cursor.execute("SELECT sp_repartidor_actualizar_estado(%s,%s)", (id_usuario, estado))
                 conexion.commit()
                 return True
             except Exception as e:
@@ -64,11 +61,9 @@ class RepartidorDAO:
         conexion = obtener_conexion()
         if conexion:
             try:
-                cursor = conexion.cursor(dictionary=True)
-                cursor.callproc('sp_repartidor_listar_disponibles_filtrado')
-                for result in cursor.stored_results():
-                    return result.fetchall()
-                return []
+                cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                cursor.execute("SELECT * FROM sp_repartidor_listar_disponibles_filtrado()")
+                return cursor.fetchall()
             except Exception as e:
                 print(f"Error al listar repartidores disponibles: {e}")
                 return []
@@ -80,11 +75,9 @@ class RepartidorDAO:
         conexion = obtener_conexion()
         if conexion:
             try:
-                cursor = conexion.cursor(dictionary=True)
-                cursor.callproc('sp_repartidor_listar_sin_malos')
-                for result in cursor.stored_results():
-                    return result.fetchall()
-                return []
+                cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                cursor.execute("SELECT * FROM sp_repartidor_listar_sin_malos()")
+                return cursor.fetchall()
             except Exception as e:
                 print(f"Error al listar repartidores limpios: {e}")
                 return []

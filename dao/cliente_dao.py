@@ -1,6 +1,6 @@
 from datos.conexion import obtener_conexion
 from modelo.cliente import Cliente
-
+import psycopg2.extras
 
 class ClienteDAO:
 
@@ -9,8 +9,8 @@ class ClienteDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.callproc('sp_cliente_guardar',
-                                (cliente.id_usuario, cliente.numero_tarjeta, cliente.estado))
+                cursor.execute("SELECT sp_cliente_guardar(%s,%s,%s)",
+                               (cliente.id_usuario, cliente.numero_tarjeta, cliente.estado))
                 conexion.commit()
                 return cliente
             except Exception as e:
@@ -25,13 +25,12 @@ class ClienteDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.callproc('sp_cliente_buscar_por_id', (id_usuario,))
-                for result in cursor.stored_results():
-                    fila = result.fetchone()
-                    if fila:
-                        c = Cliente()
-                        c.id_usuario, c.numero_tarjeta, c.estado = fila
-                        return c
+                cursor.execute("SELECT * FROM sp_cliente_buscar_por_id(%s)", (id_usuario,))
+                fila = cursor.fetchone()
+                if fila:
+                    c = Cliente()
+                    c.id_usuario, c.numero_tarjeta, c.estado = fila
+                    return c
                 return None
             except Exception as e:
                 print(f"Error al buscar cliente: {e}")
@@ -45,7 +44,7 @@ class ClienteDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.callproc('sp_cliente_actualizar_estado', (id_usuario, estado))
+                cursor.execute("SELECT sp_cliente_actualizar_estado(%s,%s)", (id_usuario, estado))
                 conexion.commit()
                 return True
             except Exception as e:
@@ -59,11 +58,9 @@ class ClienteDAO:
         conexion = obtener_conexion()
         if conexion:
             try:
-                cursor = conexion.cursor(dictionary=True)
-                cursor.callproc('sp_cliente_listar_activos')
-                for result in cursor.stored_results():
-                    return result.fetchall()
-                return []
+                cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                cursor.execute("SELECT * FROM sp_cliente_listar_activos()")
+                return cursor.fetchall()
             except Exception as e:
                 print(f"Error al listar clientes activos: {e}")
                 return []
@@ -75,11 +72,9 @@ class ClienteDAO:
         conexion = obtener_conexion()
         if conexion:
             try:
-                cursor = conexion.cursor(dictionary=True)
-                cursor.callproc('sp_cliente_listar_suspendidos')
-                for result in cursor.stored_results():
-                    return result.fetchall()
-                return []
+                cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                cursor.execute("SELECT * FROM sp_cliente_listar_suspendidos()")
+                return cursor.fetchall()
             except Exception as e:
                 print(f"Error al listar clientes suspendidos: {e}")
                 return []
