@@ -6,7 +6,7 @@ load_dotenv()
 
 def obtener_conexion():
     try:
-        return psycopg2.connect(
+        conn = psycopg2.connect(
             host=os.environ.get("DB_HOST"),
             user=os.environ.get("DB_USER"),
             password=os.environ.get("DB_PASSWORD"),
@@ -14,6 +14,8 @@ def obtener_conexion():
             port=int(os.environ.get("DB_PORT", 5432)),
             sslmode="require"
         )
+        print("CONEXION EXITOSA")
+        return conn
     except Exception as e:
-        print(f"Error conectando a la base de datos: {e}")
+        print("ERROR POSTGRES:", repr(e))
         return None
