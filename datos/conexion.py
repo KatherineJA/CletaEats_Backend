@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def obtener_conexion():
+    print(f"Conectando a: {os.environ.get('DB_HOST')} / {os.environ.get('DB_NAME')}")
     try:
         conn = psycopg2.connect(
             host=os.environ.get("DB_HOST"),
