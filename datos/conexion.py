@@ -11,7 +11,8 @@ def obtener_conexion():
             user=os.environ.get("DB_USER"),
             password=os.environ.get("DB_PASSWORD"),
             dbname=os.environ.get("DB_NAME"),
-            port=int(os.environ.get("DB_PORT", 5432))
+            port=int(os.environ.get("DB_PORT", 5432)),
+            sslmode="require"
         )
     except Exception as e:
         print(f"Error conectando a la base de datos: {e}")
