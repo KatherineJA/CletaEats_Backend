@@ -8,11 +8,17 @@ class ComboDAO:
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.execute("SELECT sp_combo_guardar(%s,%s,%s,%s,%s,%s)", (
-                    int(combo['id_restaurante']), str(combo['nombre']),
-                    str(combo.get('descripcion', '')), int(combo.get('numero', 0)),
-                    float(combo['precio']), combo.get('imagen')
-                ))
+                cursor.execute(
+                    "SELECT sp_combo_guardar(%s::integer, %s::varchar, %s::text, %s::smallint, %s::decimal, %s::varchar)",
+                    (
+                        int(combo['id_restaurante']),
+                        str(combo['nombre']),
+                        str(combo.get('descripcion', '') or ''),
+                        int(combo.get('numero', 0)),
+                        float(combo['precio']),
+                        combo.get('imagen') or None
+                    )
+                )
                 fila = cursor.fetchone()
                 conexion.commit()
                 return fila[0] if fila else None
