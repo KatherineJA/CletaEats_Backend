@@ -24,9 +24,10 @@ class Router(BaseHTTPRequestHandler):
         self.send_response(codigo)
         self.send_header("Content-Type", "application/json")
         self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
         self.end_headers()
         self.wfile.write(json.dumps(datos, default=str).encode("utf-8"))
-
     def _leer_body(self):
         content_type = self.headers.get("Content-Type", "")
         if "multipart/form-data" in content_type:
@@ -122,9 +123,9 @@ class Router(BaseHTTPRequestHandler):
     # ------------------------------------------------------------------
     def do_OPTIONS(self):
         self.send_response(200)
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
         self.end_headers()
 
     # ------------------------------------------------------------------
@@ -177,6 +178,9 @@ class Router(BaseHTTPRequestHandler):
                     content_type = mimetypes.guess_type(ruta_archivo)[0] or "application/octet-stream"
                     self.send_header("Content-Type", content_type)
                     self.send_header("Access-Control-Allow-Origin", "*")
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+                    self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
                     self.end_headers()
                     with open(ruta_archivo, "rb") as f:
                         self.wfile.write(f.read())
