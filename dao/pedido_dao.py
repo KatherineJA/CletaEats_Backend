@@ -3,15 +3,14 @@ import psycopg2.extras
 
 class PedidoDAO:
 
-    def guardar(self, id_cliente, id_restaurante, lat_destino, lon_destino,
-                distancia_km, costo_envio, global_id=None):
+    def guardar(self, id_cliente, id_restaurante, lat_destino, lon_destino, distancia_km, costo_envio):
         conexion = obtener_conexion()
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.execute("SELECT sp_pedido_guardar(%s,%s,%s,%s,%s,%s,%s)", (
+                cursor.execute("SELECT sp_pedido_guardar(%s,%s,%s,%s,%s,%s)", (
                     id_cliente, id_restaurante, lat_destino, lon_destino,
-                    round(distancia_km, 4), costo_envio, global_id
+                    round(distancia_km, 4), costo_envio
                 ))
                 fila = cursor.fetchone()
                 conexion.commit()

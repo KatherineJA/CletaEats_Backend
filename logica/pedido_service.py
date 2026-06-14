@@ -31,8 +31,7 @@ class PedidoService:
                      lat_destino, lon_destino,
                      items,
                      metodo_pago="EFECTIVO",
-                     numero_tarjeta=None,
-                     global_id=None):
+                     numero_tarjeta=None):
         cliente = self.cliente_dao.buscar_por_id(id_cliente)
         if not cliente or not cliente.esta_activo():
             return {"exito": False,
@@ -61,15 +60,10 @@ class PedidoService:
         total         = round(subtotal + costo_envio + iva, 2)
 
         id_pedido = self.pedido_dao.guardar(
-            id_cliente,
-            id_restaurante,
-            lat_destino,
-            lon_destino,
-            distancia_km,
-            costo_envio,
-            global_id
+            id_cliente, id_restaurante,
+            lat_destino, lon_destino,
+            distancia_km, costo_envio
         )
-
         if not id_pedido:
             return {"exito": False, "mensaje": "Error al guardar el pedido"}
 
@@ -84,7 +78,6 @@ class PedidoService:
         return {
             "exito":     True,
             "id_pedido": id_pedido,
-            "global_id": global_id,
             "resumen": {
                 "subtotal":          subtotal,
                 "distancia_km":      round(distancia_km, 2),
