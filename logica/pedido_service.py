@@ -61,11 +61,10 @@ class PedidoService:
         total         = round(subtotal + costo_envio + iva, 2)
 
         id_pedido = self.pedido_dao.guardar(
-            id_cliente, id_restaurante,
-            lat_destino, lon_destino,
-            distancia_km, costo_envio,
-            global_id
+            id_cliente, id_restaurante, lat_destino, lon_destino,
+            distancia_km, costo_envio, subtotal, iva, total, global_id
         )
+
         if not id_pedido:
             return {"exito": False, "mensaje": "Error al guardar el pedido"}
 
