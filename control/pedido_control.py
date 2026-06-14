@@ -13,6 +13,7 @@ def manejar_post(path, body, responder):
 
         metodo_pago = body.get("metodo_pago", "EFECTIVO")
         numero_tarjeta = body.get("numero_tarjeta")
+        global_id = body.get("global_id")
 
         responder(200, pedido_service.crear_pedido(
             body["id_cliente"], body["id_restaurante"],
@@ -20,7 +21,8 @@ def manejar_post(path, body, responder):
             body["lat_destino"], body["lon_destino"],
             body["items"],
             metodo_pago=metodo_pago,
-            numero_tarjeta=numero_tarjeta
+            numero_tarjeta=numero_tarjeta,
+            global_id=global_id
         ))
         return True
 
