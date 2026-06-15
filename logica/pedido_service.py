@@ -167,7 +167,17 @@ class PedidoService:
 
     def pedidos_disponibles(self):
         datos = self.pedido_dao.listar_disponibles()
-        return {"exito": True, "datos": datos}
+        # Enriquecer cada pedido con el nombre del cliente si no viene del SP
+        datos_enriquecidos = []
+        for pedido in datos:
+            pedido = dict(pedido)
+            if not pedido.get("nombre_cliente"):
+                id_cliente = pedido.get("id_cliente")
+                if id_cliente:
+                    usuario = self.usuario_dao.buscar_por_id(id_cliente)
+                    pedido["nombre_cliente"] = usuario.nombre if usuario else None
+            datos_enriquecidos.append(pedido)
+        return {"exito": True, "datos": datos_enriquecidos}
 
     def detalle_pedido(self, id_pedido):
         pedido = self.pedido_dao.buscar_por_id(id_pedido)
