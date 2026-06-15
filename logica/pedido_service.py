@@ -163,7 +163,16 @@ class PedidoService:
 
     def historial_repartidor(self, id_repartidor):
         datos = self.pedido_dao.listar_por_repartidor(id_repartidor)
-        return {"exito": True, "datos": datos}
+        datos_enriquecidos = []
+        for pedido in datos:
+            pedido = dict(pedido)
+            if not pedido.get("nombre_cliente"):
+                id_cliente = pedido.get("id_cliente")
+                if id_cliente:
+                    usuario = self.usuario_dao.buscar_por_id(id_cliente)
+                    pedido["nombre_cliente"] = usuario.nombre if usuario else None
+            datos_enriquecidos.append(pedido)
+        return {"exito": True, "datos": datos_enriquecidos}
 
     def pedidos_disponibles(self):
         datos = self.pedido_dao.listar_disponibles()
