@@ -42,7 +42,6 @@ class PedidoService:
             if not tarjeta_a_usar:
                 return {"exito": False,
                         "mensaje": "No hay tarjeta disponible para el pago."}
-            # Si el cliente quiso guardar la tarjeta nueva, actualizarla
             if numero_tarjeta and numero_tarjeta != cliente.numero_tarjeta:
                 self.usuario_dao.actualizar_tarjeta_cliente(id_cliente, numero_tarjeta)
 
@@ -62,7 +61,8 @@ class PedidoService:
         id_pedido = self.pedido_dao.guardar(
             id_cliente, id_restaurante,
             lat_destino, lon_destino,
-            distancia_km, costo_envio
+            distancia_km, costo_envio,
+            subtotal, iva, total
         )
         if not id_pedido:
             return {"exito": False, "mensaje": "Error al guardar el pedido"}
