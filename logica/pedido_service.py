@@ -173,4 +173,9 @@ class PedidoService:
         pedido = self.pedido_dao.buscar_por_id(id_pedido)
         if not pedido:
             return {"exito": False, "mensaje": "Pedido no encontrado"}
+
+        detalles = self.pedido_dao.listar_detalles(id_pedido)  
+        pedido = dict(pedido)
+        pedido["detalles"] = detalles
+
         return {"exito": True, "datos": pedido}
