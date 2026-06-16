@@ -1,3 +1,7 @@
+import os
+import uuid
+
+from control.combo_control import TIPOS_IMAGEN_PERMITIDOS, _detectar_tipo_imagen
 from logica.restaurante_service import RestauranteService
 from logica.encargado_service import EncargadoService  # <-- Importamos el servicio de encargados
 
