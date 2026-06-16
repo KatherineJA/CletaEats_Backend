@@ -47,3 +47,9 @@ class RestauranteService:
             "exito": ok,
             "mensaje": "Encargado asignado al restaurante con éxito" if ok else "Error al asociar el encargado en la base de datos"
         }
+
+    def actualizar_restaurante(self, id_restaurante, nombre, direccion, tipo_comida, imagen):
+        ok = self.restaurante_dao.actualizar_datos(id_restaurante, nombre, direccion, tipo_comida, imagen)
+        if not ok:
+            return {"exito": False, "mensaje": "Error al actualizar el restaurante"}
+        return {"exito": True, "mensaje": "Restaurante actualizado correctamente"}

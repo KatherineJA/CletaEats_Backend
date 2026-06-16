@@ -146,3 +146,22 @@ class RestauranteDAO:
                 conexion.close()
 
         return False
+
+    def actualizar_datos(self, id_restaurante, nombre, direccion, tipo_comida, imagen):
+        conexion = obtener_conexion()
+        if conexion:
+            try:
+                cursor = conexion.cursor()
+                cursor.execute(
+                    "SELECT sp_restaurante_actualizar(%s, %s, %s, %s, %s)",
+                    (id_restaurante, nombre, direccion, tipo_comida, imagen)
+                )
+                conexion.commit()
+                return True
+            except Exception as e:
+                print(f"Error al actualizar restaurante: {e}")
+                return False
+            finally:
+                cursor.close()
+                conexion.close()
+        return False

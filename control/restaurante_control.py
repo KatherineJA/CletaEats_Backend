@@ -68,6 +68,7 @@ def manejar_post(path, body, responder):
             responder(500, {"exito": False, "mensaje": f"Error interno en el servidor: {str(e)}"})
             return True
 
+
     # RUTA B: Crear SOLO el restaurante (El encargado se asignará después)
     if path == "/restaurante":
         campos = ["nombre", "cedula_juridica", "direccion", "tipo_comida"]
@@ -80,6 +81,33 @@ def manejar_post(path, body, responder):
             body["nombre"], body["cedula_juridica"], body["direccion"], body["tipo_comida"],
             body.get("latitud"), body.get("longitud"), body.get("id_encargado")
         ))
+        return True
+    if path == "/restaurante/actualizar":
+        id_res = body.get("id_restaurante")
+        if not id_res:
+            responder(400, {"exito": False, "mensaje": "id_restaurante es requerido"})
+            return True
+
+        # Imagen: puede venir como archivo o como string (URL existente)
+        imagen_raw = body.get("imagen")
+        if isinstance(imagen_raw, dict):
+            imagen_url, error = _guardar_imagen_restaurante(imagen_raw)
+            if error:
+                responder(400, {"exito": False, "mensaje": error})
+                return True
+        elif isinstance(imagen_raw, str) and imagen_raw.strip():
+            imagen_url = imagen_raw.strip()
+        else:
+            imagen_url = None  # no actualiza imagen si no viene
+
+        resultado = restaurante_service.actualizar_restaurante(
+            id_restaurante=int(id_res),
+            nombre=body.get("nombre"),
+            direccion=body.get("direccion"),
+            tipo_comida=body.get("tipo_comida"),
+            imagen=imagen_url
+        )
+        responder(200, resultado)
         return True
 
     return False
@@ -99,3 +127,37 @@ def manejar_get(path, query, responder):
         return True
 
     return False
+CARPETA_IMAGENES_RESTAURANTES = os.path.join("uploads", "restaurantes")
+
+def _guardar_imagen_restaurante(imagen):
+    if not isinstance(imagen, dict):
+        return None, "Formato de imagen inválido"
+    data = imagen.get("data")
+    if not isinstance(data, (bytes, bytearray)) or not data:
+        return None, "Imagen vacía"
+
+    tipo = _detectar_tipo_imagen(data)  # reutilizás la misma función
+    if tipo not in TIPOS_IMAGEN_PERMITIDOS:
+        return None, "Tipo de imagen no permitido"
+
+    usar_imgbb = os.environ.get("USAR_IMGBB", "false").lower() == "true"
+    if usar_imgbb:
+        try:
+            import base64, requests
+            foto_b64 = base64.b64encode(data).decode("utf-8")
+            response = requests.post("https://api.imgbb.com/1/upload",
+                data={"key": os.environ.get("IMGBB_API_KEY", ""), "image": foto_b64})
+            resultado = response.json()
+            if resultado.get("success"):
+                return resultado["data"]["url"], None
+            return None, "Error al subir a ImgBB"
+        except Exception as e:
+            return None, f"Error ImgBB: {str(e)}"
+
+    os.makedirs(CARPETA_IMAGENES_RESTAURANTES, exist_ok=True)
+    ext = TIPOS_IMAGEN_PERMITIDOS[tipo]
+    nombre_archivo = f"restaurante_{uuid.uuid4().hex}.{ext}"
+    ruta = os.path.join(CARPETA_IMAGENES_RESTAURANTES, nombre_archivo)
+    with open(ruta, "wb") as f:
+        f.write(data)
+    return f"/{CARPETA_IMAGENES_RESTAURANTES.replace(os.sep, '/')}/{nombre_archivo}", None
